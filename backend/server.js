@@ -1,0 +1,184 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import mongoSanitize from 'express-mongo-sanitize';
+import hpp from 'hpp';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+import config from './config/config.js';
+import connectDB from './config/db.js';
+import logger from './utils/logger.js';
+import { apiLimiter } from './middleware/rateLimiter.js';
+import errorHandler, { notFound } from './middleware/errorHandler.js';
+
+// Route imports
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import billRoutes from './routes/billRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import solarRoutes from './routes/solarRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+
+// ES module dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Initialize Express
+const app = express();
+
+// ============================================
+// SECURITY MIDDLEWARE
+// ============================================
+
+// Set security HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
+// CORS
+app.use(cors({
+  origin: config.corsOrigin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Rate limiting
+app.use('/api/', apiLimiter);
+
+// Sanitize data — prevent NoSQL injection
+app.use(mongoSanitize());
+
+// Prevent HTTP param pollution
+app.use(hpp());
+
+// ============================================
+// BODY PARSING
+// ============================================
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ============================================
+// LOGGING
+// ============================================
+
+if (config.env === 'development') {
+  app.use(morgan('dev'));
+}
+
+// ============================================
+// STATIC FILES
+// ============================================
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ============================================
+// API ROUTES
+// ============================================
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/bills', billRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/solar', solarRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+
+// ============================================
+// HEALTH CHECK
+// ============================================
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Solar Bharat API is running ☀️',
+    environment: config.env,
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(process.uptime())}s`,
+  });
+});
+
+// ============================================
+// API DOCS (simple route listing)
+// ============================================
+
+app.get('/api', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to Solar Bharat API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth — Authentication (register, login, logout, refresh)',
+      users: '/api/users — User management (profile, preferences)',
+      bills: '/api/bills — Bill upload & analysis',
+      dashboard: '/api/dashboard — Dashboard analytics',
+      solar: '/api/solar — Solar calculator & rooftop analysis',
+      chat: '/api/chat — AI chatbot',
+      notifications: '/api/notifications — User notifications',
+      admin: '/api/admin — Admin panel (admin only)',
+      health: '/api/health — Health check',
+    },
+  });
+});
+
+// ============================================
+// ERROR HANDLING
+// ============================================
+
+app.use(notFound);
+app.use(errorHandler);
+
+// ============================================
+// START SERVER
+// ============================================
+
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+
+    // Start server
+    const server = app.listen(config.port, () => {
+      logger.info(`
+  ╔═══════════════════════════════════════════════╗
+  ║                                               ║
+  ║   ☀️  Solar Bharat API Server                  ║
+  ║                                               ║
+  ║   Environment : ${config.env.padEnd(28)}║
+  ║   Port        : ${String(config.port).padEnd(28)}║
+  ║   URL         : ${config.appUrl.padEnd(28)}║
+  ║   Health      : ${(config.appUrl + '/api/health').padEnd(28)}║
+  ║                                               ║
+  ╚═══════════════════════════════════════════════╝
+      `);
+    });
+
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (err) => {
+      logger.error(`Unhandled Rejection: ${err.message}`);
+      server.close(() => process.exit(1));
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        logger.info('Process terminated.');
+      });
+    });
+
+  } catch (error) {
+    logger.error(`Failed to start server: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+export default app;
