@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'crypto';
-
 // Knowledge base for solar energy Q&A
 const KNOWLEDGE_BASE = {
   subsidy: {
