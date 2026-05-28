@@ -118,76 +118,78 @@ export default function RegisterPage() {
     }
   };
 
-  /* Shared input wrapper */
-  const InputField = ({
-    id,
-    name,
-    type = 'text',
-    placeholder,
-    icon: Icon,
-    value,
-    autoComplete,
-    prefix,
-    toggleShow,
-    showState,
-    error,
-  }) => (
-    <motion.div variants={childVariant}>
-      <label htmlFor={id} className="sr-only">
-        {placeholder}
-      </label>
-      <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
-          <Icon className="w-5 h-5" />
+/* Shared input wrapper moved OUTSIDE to prevent re-mounting and losing focus */
+const InputField = ({
+  id,
+  name,
+  type = 'text',
+  placeholder,
+  icon: Icon,
+  value,
+  onChange,
+  autoComplete,
+  prefix,
+  toggleShow,
+  showState,
+  error,
+}) => (
+  <motion.div variants={childVariant}>
+    <label htmlFor={id} className="sr-only">
+      {placeholder}
+    </label>
+    <div className="relative">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+        <Icon className="w-5 h-5" />
+      </span>
+
+      {prefix && (
+        <span className="absolute left-12 top-1/2 -translate-y-1/2 text-sm font-medium text-navy-500 dark:text-navy-400 pointer-events-none select-none">
+          {prefix}
         </span>
-
-        {prefix && (
-          <span className="absolute left-12 top-1/2 -translate-y-1/2 text-sm font-medium text-navy-500 dark:text-navy-400 pointer-events-none select-none">
-            {prefix}
-          </span>
-        )}
-
-        <input
-          id={id}
-          name={name}
-          type={toggleShow !== undefined ? (showState ? 'text' : 'password') : type}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          value={value}
-          onChange={handleChange}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
-          className={`input-solar ${prefix ? 'pl-[5.5rem]' : 'pl-12'} ${
-            toggleShow !== undefined ? 'pr-12' : ''
-          } ${
-            error
-              ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
-              : ''
-          }`}
-        />
-
-        {toggleShow !== undefined && (
-          <button
-            type="button"
-            onClick={toggleShow}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
-            aria-label={showState ? 'Hide password' : 'Show password'}
-          >
-            {showState ? (
-              <HiOutlineEyeSlash className="w-5 h-5" />
-            ) : (
-              <HiOutlineEye className="w-5 h-5" />
-            )}
-          </button>
-        )}
-      </div>
-      {error && (
-        <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500">
-          {error}
-        </p>
       )}
-    </motion.div>
-  );
+
+      <input
+        id={id}
+        name={name}
+        type={toggleShow !== undefined ? (showState ? 'text' : 'password') : type}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={onChange}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={`input-solar ${prefix ? 'pl-[5.5rem]' : 'pl-12'} ${
+          toggleShow !== undefined ? 'pr-12' : ''
+        } ${
+          error
+            ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
+            : ''
+        }`}
+      />
+
+      {toggleShow !== undefined && (
+        <button
+          type="button"
+          onClick={toggleShow}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
+          aria-label={showState ? 'Hide password' : 'Show password'}
+        >
+          {showState ? (
+            <HiOutlineEyeSlash className="w-5 h-5" />
+          ) : (
+            <HiOutlineEye className="w-5 h-5" />
+          )}
+        </button>
+      )}
+    </div>
+    {error && (
+      <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500">
+        {error}
+      </p>
+    )}
+  </motion.div>
+);
+
 
   return (
     <motion.div
@@ -218,6 +220,7 @@ export default function RegisterPage() {
             placeholder="Full Name"
             icon={HiOutlineUser}
             value={form.name}
+            onChange={handleChange}
             autoComplete="name"
             error={errors.name}
           />
@@ -229,6 +232,7 @@ export default function RegisterPage() {
             placeholder="Email address"
             icon={HiOutlineEnvelope}
             value={form.email}
+            onChange={handleChange}
             autoComplete="email"
             error={errors.email}
           />
@@ -240,6 +244,7 @@ export default function RegisterPage() {
             placeholder="Mobile number"
             icon={HiOutlinePhone}
             value={form.phone}
+            onChange={handleChange}
             autoComplete="tel-national"
             prefix="+91"
             error={errors.phone}
@@ -252,6 +257,7 @@ export default function RegisterPage() {
             placeholder="Password"
             icon={HiOutlineLockClosed}
             value={form.password}
+            onChange={handleChange}
             autoComplete="new-password"
             toggleShow={() => setShowPassword((v) => !v)}
             showState={showPassword}
@@ -302,6 +308,7 @@ export default function RegisterPage() {
             placeholder="Confirm Password"
             icon={HiOutlineLockClosed}
             value={form.confirmPassword}
+            onChange={handleChange}
             autoComplete="new-password"
             toggleShow={() => setShowConfirm((v) => !v)}
             showState={showConfirm}
