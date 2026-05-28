@@ -1,89 +1,123 @@
-import { createContext, useState, useCallback } from 'react';
+import { createContext, useState, useCallback, useEffect } from 'react';
+import { authAPI, tokenManager } from '../services/api';
 
 export const AuthContext = createContext();
 
-const MOCK_USERS = {
-  user: {
-    id: '1',
-    name: 'Arjun Sharma',
-    email: 'arjun@solarbharat.in',
-    role: 'user',
-    avatar: null,
-    phone: '+91 98765 43210',
-    location: 'Mumbai, Maharashtra',
-    joinedDate: '2024-06-15',
-    solarSystem: {
-      capacity: '5kW',
-      panels: 12,
-      installedDate: '2024-07-20'
-    }
-  },
-  admin: {
-    id: '0',
-    name: 'Admin',
-    email: 'admin@solarbharat.in',
-    role: 'admin',
-    avatar: null,
-    phone: '+91 99999 00000',
-    location: 'New Delhi',
-    joinedDate: '2024-01-01',
-  }
-};
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('solar-bharat-user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(() => tokenManager.getUser());
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // On mount: validate token and fetch fresh user data
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = tokenManager.getAccessToken();
+      if (token && !tokenManager.isTokenExpired()) {
+        try {
+          const response = await authAPI.getMe();
+          const userData = response.data.user;
+          setUser(userData);
+          tokenManager.setUser(userData);
+        } catch {
+          // Token invalid — clear auth
+          tokenManager.clearAll();
+          setUser(null);
+        }
+      } else if (token && tokenManager.isTokenExpired()) {
+        // Try to refresh
+        const refreshToken = tokenManager.getRefreshToken();
+        if (refreshToken) {
+          try {
+            const response = await authAPI.refresh(refreshToken);
+            tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
+            const meResponse = await authAPI.getMe();
+            const userData = meResponse.data.user;
+            setUser(userData);
+            tokenManager.setUser(userData);
+          } catch {
+            tokenManager.clearAll();
+            setUser(null);
+          }
+        } else {
+          tokenManager.clearAll();
+          setUser(null);
+        }
+      }
+      setInitialLoading(false);
+    };
+
+    initAuth();
+  }, []);
 
   const login = useCallback(async (email, password) => {
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    let mockUser;
-    if (email.includes('admin')) {
-      mockUser = MOCK_USERS.admin;
-    } else {
-      mockUser = { ...MOCK_USERS.user, email };
+    try {
+      const response = await authAPI.login({ email, password });
+      const { user: userData, accessToken, refreshToken } = response.data;
+
+      tokenManager.setTokens(accessToken, refreshToken);
+      tokenManager.setUser(userData);
+      setUser(userData);
+      setLoading(false);
+      return userData;
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-    
-    setUser(mockUser);
-    localStorage.setItem('solar-bharat-user', JSON.stringify(mockUser));
-    setLoading(false);
-    return mockUser;
   }, []);
 
   const register = useCallback(async (userData) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const newUser = {
-      ...MOCK_USERS.user,
-      ...userData,
-      id: Date.now().toString(),
-      joinedDate: new Date().toISOString().split('T')[0],
-    };
-    
-    setUser(newUser);
-    localStorage.setItem('solar-bharat-user', JSON.stringify(newUser));
-    setLoading(false);
-    return newUser;
+    try {
+      const response = await authAPI.register(userData);
+      const { user: newUser, accessToken, refreshToken } = response.data;
+
+      tokenManager.setTokens(accessToken, refreshToken);
+      tokenManager.setUser(newUser);
+      setUser(newUser);
+      setLoading(false);
+      return newUser;
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await authAPI.logout();
+    } catch {
+      // Continue with local logout even if API fails
+    }
+    tokenManager.clearAll();
     setUser(null);
-    localStorage.removeItem('solar-bharat-user');
   }, []);
+
+  const logoutAll = useCallback(async () => {
+    try {
+      await authAPI.logoutAll();
+    } catch {
+      // Continue with local logout
+    }
+    tokenManager.clearAll();
+    setUser(null);
+  }, []);
+
+  const updateUser = useCallback((updatedData) => {
+    const updated = { ...user, ...updatedData };
+    setUser(updated);
+    tokenManager.setUser(updated);
+  }, [user]);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
+  const isEmailVerified = user?.emailVerified === true;
 
   return (
-    <AuthContext.Provider value={{ 
-      user, login, register, logout, loading,
-      isAuthenticated, isAdmin 
+    <AuthContext.Provider value={{
+      user, login, register, logout, logoutAll, updateUser,
+      loading, initialLoading,
+      isAuthenticated, isAdmin, isEmailVerified,
     }}>
       {children}
     </AuthContext.Provider>

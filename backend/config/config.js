@@ -39,6 +39,27 @@ const config = {
   // App
   appName: process.env.APP_NAME || 'Solar Bharat',
   appUrl: process.env.APP_URL || 'http://localhost:5000',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+
+  // Security (Phase 3)
+  security: {
+    maxLoginAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS, 10) || 5,
+    lockDuration: parseInt(process.env.LOCK_DURATION_MS, 10) || 30 * 60 * 1000, // 30 min
+    sessionTimeout: parseInt(process.env.SESSION_TIMEOUT_MS, 10) || 24 * 60 * 60 * 1000, // 24 hr
+    maxActiveSessions: parseInt(process.env.MAX_ACTIVE_SESSIONS, 10) || 5,
+    bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
+    emailVerificationExpiry: 24 * 60 * 60 * 1000, // 24 hours
+    passwordResetExpiry: 60 * 60 * 1000, // 1 hour
+  },
+
+  // Email (Phase 3 — simulated in dev, real SMTP in production)
+  email: {
+    host: process.env.EMAIL_HOST || '',
+    port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+    user: process.env.EMAIL_USER || '',
+    pass: process.env.EMAIL_PASS || '',
+    from: process.env.EMAIL_FROM || 'noreply@solarbharat.com',
+  },
 };
 
 export default config;

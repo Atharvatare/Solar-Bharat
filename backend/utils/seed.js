@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import Product from '../models/Product.js';
 import Vendor from '../models/Vendor.js';
+import Session from '../models/Session.js';
+import TokenBlacklist from '../models/TokenBlacklist.js';
 import connectDB from '../config/db.js';
 
 dotenv.config();
@@ -20,10 +21,12 @@ const seedData = async () => {
       Notification.deleteMany({}),
       Product.deleteMany({}),
       Vendor.deleteMany({}),
+      Session.deleteMany({}),
+      TokenBlacklist.deleteMany({}),
     ]);
     console.log('🗑️  Cleared existing data');
 
-    // Create admin user
+    // Create admin user (email pre-verified)
     const admin = await User.create({
       name: 'Admin User',
       email: 'admin@solarbharat.com',
@@ -36,7 +39,7 @@ const seedData = async () => {
     });
     console.log('👤 Admin created: admin@solarbharat.com / Admin@123');
 
-    // Create demo user
+    // Create demo user (email pre-verified)
     const user = await User.create({
       name: 'Rahul Sharma',
       email: 'user@solarbharat.com',
@@ -54,6 +57,19 @@ const seedData = async () => {
       },
     });
     console.log('👤 User created: user@solarbharat.com / User@123');
+
+    // Create unverified user for testing
+    const unverified = await User.create({
+      name: 'New User',
+      email: 'new@solarbharat.com',
+      password: 'New@1234',
+      phone: '9876543212',
+      role: 'user',
+      isActive: true,
+      emailVerified: false,
+      location: { city: 'Delhi', state: 'Delhi' },
+    });
+    console.log('👤 Unverified user created: new@solarbharat.com / New@1234');
 
     // Create sample vendor
     const vendor = await Vendor.create({
@@ -112,7 +128,7 @@ const seedData = async () => {
     ]);
     console.log(`📦 ${products.length} Products created`);
 
-    // Create sample notifications
+    // Create notifications for the verified user
     await Notification.insertMany([
       {
         userId: user._id,
@@ -125,7 +141,7 @@ const seedData = async () => {
         userId: user._id,
         type: 'savings',
         title: '🎉 Savings Milestone!',
-        message: 'Congratulations! You\'ve saved ₹25,000 with solar energy so far!',
+        message: "Congratulations! You've saved ₹25,000 with solar energy so far!",
         actionUrl: '/dashboard/analytics',
       },
       {
@@ -140,12 +156,14 @@ const seedData = async () => {
 
     console.log('\n✅ Seed completed successfully!');
     console.log('\n📋 Login credentials:');
-    console.log('   Admin: admin@solarbharat.com / Admin@123');
-    console.log('   User:  user@solarbharat.com / User@123\n');
+    console.log('   Admin:      admin@solarbharat.com / Admin@123      (verified)');
+    console.log('   User:       user@solarbharat.com  / User@123       (verified)');
+    console.log('   Unverified: new@solarbharat.com   / New@1234       (unverified)\n');
 
     process.exit(0);
   } catch (error) {
     console.error('❌ Seed failed:', error.message);
+    console.error(error);
     process.exit(1);
   }
 };
