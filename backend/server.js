@@ -205,17 +205,21 @@ app.use(errorHandler);
 // START SERVER
 // ============================================
 
-const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
+// ============================================
+// START SERVER OR EXPORT FOR VERCEL
+// ============================================
 
-    // Start periodic session cleanup (every hour)
-    setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
+// Connect to MongoDB globally (Mongoose will buffer requests until connected)
+connectDB();
 
-    // Start server
-    const server = app.listen(config.port, () => {
-      logger.info(`
+// Only run app.listen and background intervals if NOT in Vercel serverless environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  
+  // Start periodic session cleanup (every hour)
+  setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
+
+  const server = app.listen(config.port, () => {
+    logger.info(`
   ╔═══════════════════════════════════════════════════╗
   ║                                                   ║
   ║   ☀️  Solar Bharat API Server v2.0                 ║
@@ -234,29 +238,23 @@ const startServer = async () => {
   ║   ✅ XSS + NoSQL Injection Protection             ║
   ║                                                   ║
   ╚═══════════════════════════════════════════════════╝
-      `);
+    `);
+  });
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (err) => {
+    logger.error(`Unhandled Rejection: ${err.message}`);
+    server.close(() => process.exit(1));
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM received. Shutting down gracefully...');
+    server.close(() => {
+      logger.info('Process terminated.');
     });
+  });
+}
 
-    // Handle unhandled promise rejections
-    process.on('unhandledRejection', (err) => {
-      logger.error(`Unhandled Rejection: ${err.message}`);
-      server.close(() => process.exit(1));
-    });
-
-    // Graceful shutdown
-    process.on('SIGTERM', () => {
-      logger.info('SIGTERM received. Shutting down gracefully...');
-      server.close(() => {
-        logger.info('Process terminated.');
-      });
-    });
-
-  } catch (error) {
-    logger.error(`Failed to start server: ${error.message}`);
-    process.exit(1);
-  }
-};
-
-startServer();
-
+// Export the app for Vercel serverless functions
 export default app;
