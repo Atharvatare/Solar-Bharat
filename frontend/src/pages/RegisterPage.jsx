@@ -37,77 +37,6 @@ const childVariant = {
   },
 };
 
-/* Shared input wrapper moved OUTSIDE to prevent re-mounting and losing focus */
-const InputField = ({
-  id,
-  name,
-  type = 'text',
-  placeholder,
-  icon: Icon,
-  value,
-  onChange,
-  autoComplete,
-  prefix,
-  toggleShow,
-  showState,
-  error,
-}) => (
-  <motion.div variants={childVariant}>
-    <label htmlFor={id} className="sr-only">
-      {placeholder}
-    </label>
-    <div className="relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
-        <Icon className="w-5 h-5" />
-      </span>
-
-      {prefix && (
-        <span className="absolute left-12 top-1/2 -translate-y-1/2 text-sm font-medium text-navy-500 dark:text-navy-400 pointer-events-none select-none">
-          {prefix}
-        </span>
-      )}
-
-      <input
-        id={id}
-        name={name}
-        type={toggleShow !== undefined ? (showState ? 'text' : 'password') : type}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={onChange}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className={`input-solar ${prefix ? 'pl-[5.5rem]' : 'pl-12'} ${
-          toggleShow !== undefined ? 'pr-12' : ''
-        } ${
-          error
-            ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
-            : ''
-        }`}
-      />
-
-      {toggleShow !== undefined && (
-        <button
-          type="button"
-          onClick={toggleShow}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
-          aria-label={showState ? 'Hide password' : 'Show password'}
-        >
-          {showState ? (
-            <HiOutlineEyeSlash className="w-5 h-5" />
-          ) : (
-            <HiOutlineEye className="w-5 h-5" />
-          )}
-        </button>
-      )}
-    </div>
-    {error && (
-      <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500">
-        {error}
-      </p>
-    )}
-  </motion.div>
-);
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -213,55 +142,116 @@ export default function RegisterPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-          <InputField
-            id="name"
-            name="name"
-            placeholder="Full Name"
-            icon={HiOutlineUser}
-            value={form.name}
-            onChange={handleChange}
-            autoComplete="name"
-            error={errors.name}
-          />
+          {/* Name */}
+          <motion.div variants={childVariant}>
+            <label htmlFor="name" className="sr-only">Full Name</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+                <HiOutlineUser className="w-5 h-5" />
+              </span>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="Full Name"
+                autoComplete="name"
+                value={form.name}
+                onChange={handleChange}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                className={`input-solar pl-12 ${
+                  errors.name ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''
+                }`}
+              />
+            </div>
+            {errors.name && <p id="name-error" className="mt-1.5 text-sm text-red-500">{errors.name}</p>}
+          </motion.div>
 
-          <InputField
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Email address"
-            icon={HiOutlineEnvelope}
-            value={form.email}
-            onChange={handleChange}
-            autoComplete="email"
-            error={errors.email}
-          />
+          {/* Email */}
+          <motion.div variants={childVariant}>
+            <label htmlFor="email" className="sr-only">Email address</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+                <HiOutlineEnvelope className="w-5 h-5" />
+              </span>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email address"
+                autoComplete="email"
+                value={form.email}
+                onChange={handleChange}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                className={`input-solar pl-12 ${
+                  errors.email ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''
+                }`}
+              />
+            </div>
+            {errors.email && <p id="email-error" className="mt-1.5 text-sm text-red-500">{errors.email}</p>}
+          </motion.div>
 
-          <InputField
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="Mobile number"
-            icon={HiOutlinePhone}
-            value={form.phone}
-            onChange={handleChange}
-            autoComplete="tel-national"
-            prefix="+91"
-            error={errors.phone}
-          />
+          {/* Phone */}
+          <motion.div variants={childVariant}>
+            <label htmlFor="phone" className="sr-only">Mobile number</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+                <HiOutlinePhone className="w-5 h-5" />
+              </span>
+              <span className="absolute left-12 top-1/2 -translate-y-1/2 text-sm font-medium text-navy-500 dark:text-navy-400 pointer-events-none select-none">
+                +91
+              </span>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="Mobile number"
+                autoComplete="tel-national"
+                value={form.phone}
+                onChange={handleChange}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? 'phone-error' : undefined}
+                className={`input-solar pl-[5.5rem] ${
+                  errors.phone ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''
+                }`}
+              />
+            </div>
+            {errors.phone && <p id="phone-error" className="mt-1.5 text-sm text-red-500">{errors.phone}</p>}
+          </motion.div>
 
           {/* Password */}
-          <InputField
-            id="password"
-            name="password"
-            placeholder="Password"
-            icon={HiOutlineLockClosed}
-            value={form.password}
-            onChange={handleChange}
-            autoComplete="new-password"
-            toggleShow={() => setShowPassword((v) => !v)}
-            showState={showPassword}
-            error={errors.password}
-          />
+          <motion.div variants={childVariant}>
+            <label htmlFor="password" className="sr-only">Password</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+                <HiOutlineLockClosed className="w-5 h-5" />
+              </span>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={handleChange}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                className={`input-solar pl-12 pr-12 ${
+                  errors.password ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <HiOutlineEyeSlash className="w-5 h-5" /> : <HiOutlineEye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.password && <p id="password-error" className="mt-1.5 text-sm text-red-500">{errors.password}</p>}
+          </motion.div>
 
           {/* Password Strength Meter */}
           {passwordStrength && (
@@ -301,18 +291,37 @@ export default function RegisterPage() {
           )}
 
           {/* Confirm Password */}
-          <InputField
-            id="confirmPassword"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            icon={HiOutlineLockClosed}
-            value={form.confirmPassword}
-            onChange={handleChange}
-            autoComplete="new-password"
-            toggleShow={() => setShowConfirm((v) => !v)}
-            showState={showConfirm}
-            error={errors.confirmPassword}
-          />
+          <motion.div variants={childVariant}>
+            <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+                <HiOutlineLockClosed className="w-5 h-5" />
+              </span>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirm ? 'text' : 'password'}
+                placeholder="Confirm Password"
+                autoComplete="new-password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                className={`input-solar pl-12 pr-12 ${
+                  errors.confirmPassword ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+              >
+                {showConfirm ? <HiOutlineEyeSlash className="w-5 h-5" /> : <HiOutlineEye className="w-5 h-5" />}
+              </button>
+            </div>
+            {errors.confirmPassword && <p id="confirmPassword-error" className="mt-1.5 text-sm text-red-500">{errors.confirmPassword}</p>}
+          </motion.div>
 
           {/* Terms */}
           <motion.div variants={childVariant}>
@@ -323,8 +332,7 @@ export default function RegisterPage() {
                   checked={termsAccepted}
                   onChange={(e) => {
                     setTermsAccepted(e.target.checked);
-                    if (errors.terms)
-                      setErrors((prev) => ({ ...prev, terms: '' }));
+                    if (errors.terms) setErrors((prev) => ({ ...prev, terms: '' }));
                   }}
                   className="peer sr-only"
                 />
@@ -359,9 +367,7 @@ export default function RegisterPage() {
                 </Link>
               </span>
             </label>
-            {errors.terms && (
-              <p className="mt-1.5 text-sm text-red-500">{errors.terms}</p>
-            )}
+            {errors.terms && <p className="mt-1.5 text-sm text-red-500">{errors.terms}</p>}
           </motion.div>
 
           {/* Submit */}
@@ -375,24 +381,9 @@ export default function RegisterPage() {
             >
               {loading ? (
                 <>
-                  <svg
-                    className="w-5 h-5 animate-spin"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    />
+                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                   </svg>
                   Creating Account…
                 </>
