@@ -59,12 +59,12 @@ app.use(helmet({
   },
 }));
 
-// CORS — restrict to frontend origin only
+// CORS — Temporarily allow all origins to debug Vercel Network Errors
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: true, // Allow all origins temporarily
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['X-Total-Count'],
   maxAge: 600, // 10 min preflight cache
 }));
