@@ -41,7 +41,7 @@ const sendTokenResponse = async (user, statusCode, res, req, message) => {
     expires: new Date(Date.now() + config.jwt.cookieExpire * 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: config.env === 'production',
-    sameSite: config.env === 'production' ? 'strict' : 'lax',
+    sameSite: config.env === 'production' ? 'none' : 'lax',
     path: '/api/auth',
   };
 
@@ -270,7 +270,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     expires: new Date(Date.now() + config.jwt.cookieExpire * 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: config.env === 'production',
-    sameSite: config.env === 'production' ? 'strict' : 'lax',
+    sameSite: config.env === 'production' ? 'none' : 'lax',
     path: '/api/auth',
   };
 
@@ -327,7 +327,13 @@ export const logout = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   // Clear cookie
-  res.cookie('refreshToken', '', { expires: new Date(0), httpOnly: true, path: '/api/auth' });
+  res.cookie('refreshToken', '', { 
+    expires: new Date(0), 
+    httpOnly: true, 
+    secure: config.env === 'production',
+    sameSite: config.env === 'production' ? 'none' : 'lax',
+    path: '/api/auth' 
+  });
 
   sendSuccess(res, null, 'Logged out successfully.');
 });
@@ -355,7 +361,13 @@ export const logoutAll = asyncHandler(async (req, res) => {
   // Clear refresh token from user
   await User.findByIdAndUpdate(req.user._id, { refreshToken: null });
 
-  res.cookie('refreshToken', '', { expires: new Date(0), httpOnly: true, path: '/api/auth' });
+  res.cookie('refreshToken', '', { 
+    expires: new Date(0), 
+    httpOnly: true, 
+    secure: config.env === 'production',
+    sameSite: config.env === 'production' ? 'none' : 'lax',
+    path: '/api/auth' 
+  });
 
   logger.info(`User ${req.user.email} logged out from all devices (${count} sessions)`);
   sendSuccess(res, { sessionsRevoked: count }, 'Logged out from all devices successfully.');
