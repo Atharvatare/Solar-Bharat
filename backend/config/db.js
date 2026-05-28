@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 import config from './config.js';
 import logger from '../utils/logger.js';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import User from '../models/User.js';
 import { seedMemoryDB } from '../utils/memorySeeder.js';
 
 let mongod = null;
 
 const connectDB = async () => {
+  const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+  
   const isPlaceholder = !config.mongoUri || 
                         config.mongoUri.includes('xxxxx') || 
                         config.mongoUri.includes('your_username') || 
@@ -15,8 +17,15 @@ const connectDB = async () => {
                         config.mongoUri.includes('your_cluster');
 
   if (isPlaceholder) {
+    if (isVercel) {
+      logger.error('❌ CRITICAL: MongoDB URI is missing or set to a placeholder in Vercel environment variables.');
+      logger.error('Please configure the MONGO_URI environment variable in your Vercel Project Settings.');
+      throw new Error('Database is not configured. Please set the MONGO_URI environment variable in Vercel.');
+    }
+
     logger.warn('⚠️ Detected MongoDB placeholder URI. Falling back to dynamic In-Memory MongoDB Server...');
     try {
+      const { MongoMemoryServer } = await import('mongodb-memory-server');
       mongod = await MongoMemoryServer.create();
       const inMemoryUri = mongod.getUri();
       logger.info(`🚀 Starting In-Memory MongoDB at URI: ${inMemoryUri}`);
@@ -60,10 +69,27 @@ const connectDB = async () => {
       logger.info('MongoDB reconnected');
     });
 
+    // Check and auto-seed if the database is empty (important for first-time production deployments!)
+    try {
+      const userCount = await User.countDocuments();
+      if (userCount === 0) {
+        logger.info('🌱 Database is empty. Automatically seeding initial users, products, and mock data...');
+        await seedMemoryDB();
+      }
+    } catch (seedErr) {
+      logger.error(`⚠️ Auto-seeding check failed: ${seedErr.message}`);
+    }
+
   } catch (error) {
     logger.error(`MongoDB connection failed: ${error.message}`);
+    
+    if (isVercel) {
+      throw error;
+    }
+
     logger.warn('⚠️ Falling back to dynamic In-Memory MongoDB Server due to Atlas connection failure...');
     try {
+      const { MongoMemoryServer } = await import('mongodb-memory-server');
       mongod = await MongoMemoryServer.create();
       const inMemoryUri = mongod.getUri();
       logger.info(`🚀 Starting In-Memory MongoDB at URI: ${inMemoryUri}`);
