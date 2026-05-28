@@ -37,6 +37,78 @@ const childVariant = {
   },
 };
 
+/* Shared input wrapper moved OUTSIDE to prevent re-mounting and losing focus */
+const InputField = ({
+  id,
+  name,
+  type = 'text',
+  placeholder,
+  icon: Icon,
+  value,
+  onChange,
+  autoComplete,
+  prefix,
+  toggleShow,
+  showState,
+  error,
+}) => (
+  <motion.div variants={childVariant}>
+    <label htmlFor={id} className="sr-only">
+      {placeholder}
+    </label>
+    <div className="relative">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
+        <Icon className="w-5 h-5" />
+      </span>
+
+      {prefix && (
+        <span className="absolute left-12 top-1/2 -translate-y-1/2 text-sm font-medium text-navy-500 dark:text-navy-400 pointer-events-none select-none">
+          {prefix}
+        </span>
+      )}
+
+      <input
+        id={id}
+        name={name}
+        type={toggleShow !== undefined ? (showState ? 'text' : 'password') : type}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={onChange}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={`input-solar ${prefix ? 'pl-[5.5rem]' : 'pl-12'} ${
+          toggleShow !== undefined ? 'pr-12' : ''
+        } ${
+          error
+            ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
+            : ''
+        }`}
+      />
+
+      {toggleShow !== undefined && (
+        <button
+          type="button"
+          onClick={toggleShow}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
+          aria-label={showState ? 'Hide password' : 'Show password'}
+        >
+          {showState ? (
+            <HiOutlineEyeSlash className="w-5 h-5" />
+          ) : (
+            <HiOutlineEye className="w-5 h-5" />
+          )}
+        </button>
+      )}
+    </div>
+    {error && (
+      <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500">
+        {error}
+      </p>
+    )}
+  </motion.div>
+);
+
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register, loading } = useAuth();
@@ -117,79 +189,6 @@ export default function RegisterPage() {
       toast.error(err?.message || 'Registration failed. Please try again.');
     }
   };
-
-/* Shared input wrapper moved OUTSIDE to prevent re-mounting and losing focus */
-const InputField = ({
-  id,
-  name,
-  type = 'text',
-  placeholder,
-  icon: Icon,
-  value,
-  onChange,
-  autoComplete,
-  prefix,
-  toggleShow,
-  showState,
-  error,
-}) => (
-  <motion.div variants={childVariant}>
-    <label htmlFor={id} className="sr-only">
-      {placeholder}
-    </label>
-    <div className="relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 pointer-events-none">
-        <Icon className="w-5 h-5" />
-      </span>
-
-      {prefix && (
-        <span className="absolute left-12 top-1/2 -translate-y-1/2 text-sm font-medium text-navy-500 dark:text-navy-400 pointer-events-none select-none">
-          {prefix}
-        </span>
-      )}
-
-      <input
-        id={id}
-        name={name}
-        type={toggleShow !== undefined ? (showState ? 'text' : 'password') : type}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={onChange}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className={`input-solar ${prefix ? 'pl-[5.5rem]' : 'pl-12'} ${
-          toggleShow !== undefined ? 'pr-12' : ''
-        } ${
-          error
-            ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500'
-            : ''
-        }`}
-      />
-
-      {toggleShow !== undefined && (
-        <button
-          type="button"
-          onClick={toggleShow}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500 hover:text-solar-500 transition-colors"
-          aria-label={showState ? 'Hide password' : 'Show password'}
-        >
-          {showState ? (
-            <HiOutlineEyeSlash className="w-5 h-5" />
-          ) : (
-            <HiOutlineEye className="w-5 h-5" />
-          )}
-        </button>
-      )}
-    </div>
-    {error && (
-      <p id={`${id}-error`} className="mt-1.5 text-sm text-red-500">
-        {error}
-      </p>
-    )}
-  </motion.div>
-);
-
 
   return (
     <motion.div
