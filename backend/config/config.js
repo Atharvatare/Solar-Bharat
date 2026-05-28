@@ -19,7 +19,7 @@ const config = {
   },
   
   // CORS
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  corsOrigin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? 'https://solar-bharat.vercel.app' : 'http://localhost:5173'),
   
   // Rate Limiting
   rateLimit: {
@@ -38,7 +38,7 @@ const config = {
   
   // App
   appName: process.env.APP_NAME || 'Solar Bharat',
-  appUrl: process.env.APP_URL || 'http://localhost:5000',
+  appUrl: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://solar-bharat.vercel.app' : 'http://localhost:5173'),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
   // Security (Phase 3)

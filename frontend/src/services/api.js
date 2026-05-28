@@ -8,11 +8,8 @@ import axios from 'axios';
 // All requests route through our own Express backend which acts as a secure proxy.
 // =============================================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-console.log('🔌 Solar Bharat API connecting to:', API_BASE_URL);
-
-const api = axios.create({
+// If VITE_API_URL is missing, automatically use the Vercel backend URL in production
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://solar-bharat-at.vercel.app/api' : 'http://localhost:5000/api');
   baseURL: API_BASE_URL,
   timeout: 15000,
   headers: {
