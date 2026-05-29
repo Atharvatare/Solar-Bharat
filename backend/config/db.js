@@ -6,21 +6,28 @@ import { seedMemoryDB } from '../utils/memorySeeder.js';
 
 let mongod = null;
 
+let isConnected = false;
+
 const connectDB = async () => {
+  if (isConnected) {
+    logger.info('=> Using existing database connection');
+    return;
+  }
+
   const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+  const mongoUri = config.mongoUri || process.env.MONGO_URI;
   
-  const isPlaceholder = !config.mongoUri || 
-                        config.mongoUri.includes('xxxxx') || 
-                        config.mongoUri.includes('your_username') || 
-                        config.mongoUri.includes('your_password') ||
-                        config.mongoUri.includes('<username>') ||
-                        config.mongoUri.includes('your_cluster');
+  const isPlaceholder = !mongoUri || 
+                        mongoUri.includes('xxxxx') || 
+                        mongoUri.includes('your_username') || 
+                        mongoUri.includes('your_password') ||
+                        mongoUri.includes('<username>') ||
+                        mongoUri.includes('your_cluster');
 
   if (isPlaceholder) {
     if (isVercel) {
       logger.error('❌ CRITICAL: MongoDB URI is missing or set to a placeholder in Vercel environment variables.');
-      logger.error('Please configure the MONGO_URI environment variable in your Vercel Project Settings.');
-      throw new Error('Database is not configured. Please set the MONGO_URI environment variable in Vercel.');
+      return; // DO NOT THROW, IT CRASHES VERCEL SERVERLESS. Just return. Requests will fail gracefully.
     }
 
     logger.warn('⚠️ Detected MongoDB placeholder URI. Falling back to dynamic In-Memory MongoDB Server...');
@@ -36,6 +43,7 @@ const connectDB = async () => {
         socketTimeoutMS: 45000,
       });
 
+      isConnected = conn.connections[0].readyState;
       logger.info(`❇️ In-Memory MongoDB Connected: ${conn.connection.host}`);
       
       // Automatically seed the in-memory database
@@ -48,27 +56,15 @@ const connectDB = async () => {
   }
 
   try {
-    const conn = await mongoose.connect(config.mongoUri, {
+    const conn = await mongoose.connect(mongoUri, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
 
+    isConnected = conn.connections[0].readyState;
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
     
-    // Connection event handlers
-    mongoose.connection.on('error', (err) => {
-      logger.error(`MongoDB connection error: ${err.message}`);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected. Attempting reconnection...');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected');
-    });
-
     // Check and auto-seed if the database is empty (important for first-time production deployments!)
     try {
       const userCount = await User.countDocuments();
@@ -84,7 +80,8 @@ const connectDB = async () => {
     logger.error(`MongoDB connection failed: ${error.message}`);
     
     if (isVercel) {
-      throw error;
+      // Again, do not throw. Let the connection fail gracefully so Vercel doesn't return 500 on cold start
+      return;
     }
 
     logger.warn('⚠️ Falling back to dynamic In-Memory MongoDB Server due to Atlas connection failure...');
@@ -92,7 +89,6 @@ const connectDB = async () => {
       const { MongoMemoryServer } = await import('mongodb-memory-server');
       mongod = await MongoMemoryServer.create();
       const inMemoryUri = mongod.getUri();
-      logger.info(`🚀 Starting In-Memory MongoDB at URI: ${inMemoryUri}`);
       
       const conn = await mongoose.connect(inMemoryUri, {
         maxPoolSize: 10,
@@ -100,12 +96,9 @@ const connectDB = async () => {
         socketTimeoutMS: 45000,
       });
 
-      logger.info(`❇️ In-Memory MongoDB Connected: ${conn.connection.host}`);
-      
-      // Automatically seed the in-memory database
+      isConnected = conn.connections[0].readyState;
       await seedMemoryDB();
     } catch (inMemError) {
-      logger.error(`❌ Failed to start In-Memory MongoDB fallback: ${inMemError.message}`);
       process.exit(1);
     }
   }
