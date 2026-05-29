@@ -222,6 +222,9 @@ export const billAPI = {
 export const solarAPI = {
   calculate: (params) => api.post('/solar/calculate', params),
   rooftopAnalysis: (params) => api.post('/solar/rooftop-analysis', params),
+  analyzeBill: (formData) => api.post('/solar/analyze-bill', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   getReports: (params) => api.get('/solar/reports', { params }),
   getReport: (id) => api.get(`/solar/reports/${id}`),
   deleteReport: (id) => api.delete(`/solar/reports/${id}`),

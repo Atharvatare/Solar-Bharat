@@ -15,6 +15,7 @@ import Badge from '../components/common/Badge';
 import { billHistory } from '../utils/mockData';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import toast from 'react-hot-toast';
+import { solarAPI } from '../services/api';
 
 const analysisSteps = [
   'Scanning document...',
@@ -23,11 +24,11 @@ const analysisSteps = [
   'Generating insights...',
 ];
 
-const resultCards = [
-  { label: 'Monthly Consumption', value: '485 kWh', icon: HiOutlineBolt, color: 'text-solar-500' },
-  { label: 'Average Rate', value: '₹8.2/unit', icon: HiOutlineCurrencyRupee, color: 'text-emerald-500' },
-  { label: 'Peak Usage Hours', value: '6-9 PM', icon: HiOutlineClock, color: 'text-blue-500' },
-  { label: 'Potential Savings', value: '₹3,200/mo', icon: HiOutlineChartBar, color: 'text-purple-500' },
+const getResultCards = (data) => [
+  { label: 'Monthly Consumption', value: `${data?.extractedData?.units || 0} kWh`, icon: HiOutlineBolt, color: 'text-solar-500' },
+  { label: 'Bill Amount', value: `₹${data?.extractedData?.amount || 0}`, icon: HiOutlineCurrencyRupee, color: 'text-emerald-500' },
+  { label: 'System Recommended', value: `${data?.analysis?.recommendation?.systemSizeKw || 0} kW`, icon: HiOutlineChartBar, color: 'text-purple-500' },
+  { label: 'Potential Savings', value: `₹${data?.analysis?.financials?.monthlySavings || 0}/mo`, icon: HiOutlineCurrencyRupee, color: 'text-blue-500' },
 ];
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
@@ -66,32 +67,48 @@ export default function BillUploadPage() {
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   }, [handleFile]);
 
-  const handleAnalyze = () => {
+  const [analysisData, setAnalysisData] = useState(null);
+
+  const handleAnalyze = async () => {
     if (!file) return;
     setAnalyzing(true);
     setProgress(0);
     setCurrentStep(0);
     setShowResults(false);
-  };
-
-  useEffect(() => {
-    if (!analyzing) return;
-    const interval = setInterval(() => {
+    
+    // Simulate progress bar moving while waiting for API
+    const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setAnalyzing(false);
-          setShowResults(true);
-          toast.success('Bill analysis complete!');
-          return 100;
-        }
-        const next = prev + 2;
+        if (prev >= 90) return 90;
+        const next = prev + 5;
         setCurrentStep(Math.min(Math.floor(next / 25), 3));
         return next;
       });
-    }, 60);
-    return () => clearInterval(interval);
-  }, [analyzing]);
+    }, 500);
+
+    try {
+      const formData = new FormData();
+      formData.append('bill', file);
+
+      const response = await solarAPI.analyzeBill(formData);
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      setCurrentStep(3);
+      
+      setTimeout(() => {
+        setAnalyzing(false);
+        setAnalysisData(response.data);
+        setShowResults(true);
+        toast.success('Bill analysis complete!');
+      }, 500);
+
+    } catch (err) {
+      clearInterval(progressInterval);
+      setAnalyzing(false);
+      toast.error(err.message || 'Failed to analyze bill');
+    }
+  };
 
   const removeFile = () => {
     setFile(null);
@@ -220,7 +237,7 @@ export default function BillUploadPage() {
         {showResults && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {resultCards.map((card, i) => (
+              {getResultCards(analysisData).map((card, i) => (
                 <motion.div
                   key={card.label}
                   initial={{ opacity: 0, y: 20 }}
@@ -243,13 +260,13 @@ export default function BillUploadPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">AI Recommendation</h3>
                   <p className="text-navy-600 dark:text-navy-300 mt-2">
-                    Based on your bill analysis, we recommend a <strong>5kW solar system</strong> that can save you approximately
-                    <strong className="text-solar-500"> ₹4,200/month</strong>. With government subsidies, your total investment would be around ₹1.8 lakhs
-                    with a payback period of just 3.5 years.
+                    Based on your bill analysis ({analysisData?.extractedData?.provider || 'your provider'}), we recommend a <strong>{analysisData?.analysis?.recommendation?.systemSizeKw || 0}kW solar system</strong> that can save you approximately
+                    <strong className="text-solar-500"> ₹{analysisData?.analysis?.financials?.monthlySavings || 0}/month</strong>. With government subsidies of ₹{analysisData?.analysis?.financials?.subsidy || 0}, your total investment would be around ₹{analysisData?.analysis?.financials?.finalCost || 0}
+                    with a payback period of just {analysisData?.analysis?.financials?.paybackPeriodYears || 0} years.
                   </p>
                   <div className="flex flex-wrap gap-3 mt-4">
                     <button className="btn-primary text-sm py-2">Get Detailed Report</button>
-                    <button className="btn-outline text-sm py-2">Solar Calculator →</button>
+                    <button className="btn-outline text-sm py-2" onClick={() => window.location.href = '/dashboard/solar-calculator'}>Solar Calculator →</button>
                   </div>
                 </div>
               </div>
