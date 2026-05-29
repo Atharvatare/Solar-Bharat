@@ -7,6 +7,32 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} [${level}]: ${stack || message}`;
 });
 
+const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+
+const transportsList = [
+  // Console transport
+  new winston.transports.Console({
+    format: combine(colorize(), logFormat),
+  })
+];
+
+// ONLY add file transports if NOT running on Vercel (Vercel filesystem is read-only)
+if (!isVercel) {
+  transportsList.push(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+    new winston.transports.File({
+      filename: 'logs/combined.log',
+      maxsize: 5242880,
+      maxFiles: 5,
+    })
+  );
+}
+
 const logger = winston.createLogger({
   level: config.logLevel,
   format: combine(
@@ -15,30 +41,7 @@ const logger = winston.createLogger({
     logFormat
   ),
   defaultMeta: { service: 'solar-bharat' },
-  transports: [
-    // Console transport
-    new winston.transports.Console({
-      format: combine(colorize(), logFormat),
-    }),
-    // File transport — errors
-    new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-    // File transport — combined
-    new winston.transports.File({
-      filename: 'logs/combined.log',
-      maxsize: 5242880,
-      maxFiles: 5,
-    }),
-  ],
+  transports: transportsList,
 });
-
-// In production, don't log to console
-if (config.env === 'production') {
-  logger.transports[0].silent = true;
-}
 
 export default logger;
