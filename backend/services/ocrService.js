@@ -52,13 +52,37 @@ export const extractBillData = async (fileBuffer, mimeType) => {
       }
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [prompt, imagePart],
-      config: {
-        temperature: 0.1, // Low temperature for high accuracy data extraction
+    let response = null;
+    let lastError = null;
+    
+    // Try multiple models in case of 503 High Demand or 404 Not Found errors
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-pro-vision'];
+    
+    for (const modelName of modelsToTry) {
+      try {
+        logger.info(`Attempting OCR with model: ${modelName}`);
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: [prompt, imagePart],
+          config: { temperature: 0.1 }
+        });
+        // If successful, break out of loop
+        break;
+      } catch (err) {
+        lastError = err;
+        logger.warn(`Model ${modelName} failed: ${err.message}`);
+        // If it's a 404 or 503, continue to the next model
+        if (err.message.includes('404') || err.message.includes('503') || err.message.includes('UNAVAILABLE') || err.message.includes('NOT_FOUND')) {
+          continue;
+        }
+        // For other errors (like invalid image), throw immediately
+        throw err;
       }
-    });
+    }
+
+    if (!response) {
+      throw new Error(lastError ? lastError.message : 'All AI models are currently unavailable due to high demand. Please try again in a few minutes.');
+    }
 
     const responseText = response.text;
     
