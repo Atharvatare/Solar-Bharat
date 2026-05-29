@@ -128,6 +128,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API ROUTES
 // ============================================
 
+// Ensure DB is connected before handling routes (critical for serverless)
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bills', billRoutes);
@@ -220,8 +226,8 @@ app.use(errorHandler);
 // START SERVER OR EXPORT FOR VERCEL
 // ============================================
 
-// Connect to MongoDB globally (Mongoose will buffer requests until connected)
-connectDB();
+// START SERVER OR EXPORT FOR VERCEL
+// ============================================
 
 // Only run app.listen and background intervals if NOT in Vercel serverless environment
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
