@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       trim: true,
-      match: [/^(?:\+91|91|0)?[6-9]\d{9}$/, 'Please provide a valid Indian phone number'],
+      match: [/^(?:\+91|91|0)?\s?[6-9]\d{9}$/, 'Please provide a valid Indian phone number'],
     },
     role: {
       type: String,
