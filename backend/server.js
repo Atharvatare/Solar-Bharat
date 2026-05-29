@@ -14,7 +14,6 @@ import logger from './utils/logger.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import errorHandler, { notFound } from './middleware/errorHandler.js';
 import { sanitizeBody, securityHeaders, blockSuspicious, auditLog } from './middleware/security.js';
-import { cleanupExpiredSessions } from './services/sessionService.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -59,14 +58,28 @@ app.use(helmet({
   },
 }));
 
-// CORS — Temporarily allow all origins to debug Vercel Network Errors
+// CORS — Allow frontend origin
+const allowedOrigins = [
+  config.corsOrigin,
+  'https://solar-bharat.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
 app.use(cors({
-  origin: true, // Allow all origins temporarily
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Temporarily allow all for debugging
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['X-Total-Count'],
-  maxAge: 600, // 10 min preflight cache
+  maxAge: 600,
 }));
 
 // Cookie parser (for refresh token cookies)
@@ -74,9 +87,6 @@ app.use(cookieParser());
 
 // Rate limiting
 app.use('/api/', apiLimiter);
-
-// Block suspicious request patterns
-app.use(blockSuspicious);
 
 // Sanitize data — prevent NoSQL injection
 app.use(mongoSanitize({ replaceWith: '_' }));
@@ -87,14 +97,15 @@ app.use(hpp({
 }));
 
 // ============================================
-// BODY PARSING
+// BODY PARSING (must come BEFORE blockSuspicious)
 // ============================================
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Sanitize request body (XSS prevention)
+// These middleware need req.body to be parsed first
 app.use(sanitizeBody);
+app.use(blockSuspicious);
 
 // Audit log for mutations and errors
 app.use(auditLog);
@@ -214,9 +225,6 @@ connectDB();
 
 // Only run app.listen and background intervals if NOT in Vercel serverless environment
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  
-  // Start periodic session cleanup (every hour)
-  setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 
   const server = app.listen(config.port, () => {
     logger.info(`
