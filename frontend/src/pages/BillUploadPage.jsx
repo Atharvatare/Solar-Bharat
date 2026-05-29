@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   HiOutlineCloudArrowUp,
@@ -42,6 +43,7 @@ export default function BillUploadPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleFile = useCallback((f) => {
     const maxSize = 10 * 1024 * 1024;
@@ -265,8 +267,8 @@ export default function BillUploadPage() {
                     with a payback period of just {analysisData?.analysis?.financials?.paybackPeriodYears || 0} years.
                   </p>
                   <div className="flex flex-wrap gap-3 mt-4">
-                    <button className="btn-primary text-sm py-2">Get Detailed Report</button>
-                    <button className="btn-outline text-sm py-2" onClick={() => window.location.href = '/dashboard/solar-calculator'}>Solar Calculator →</button>
+                    <button className="btn-primary text-sm py-2" onClick={() => navigate('/dashboard/analytics')}>Get Detailed Report</button>
+                    <button className="btn-outline text-sm py-2" onClick={() => navigate('/dashboard/calculator')}>Solar Calculator →</button>
                   </div>
                 </div>
               </div>
