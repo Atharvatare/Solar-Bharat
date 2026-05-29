@@ -2,6 +2,8 @@ import SolarReport from '../models/SolarReport.js';
 import { asyncHandler, sendSuccess, sendPaginated, ApiError, getPagination } from '../utils/helpers.js';
 import { HTTP_STATUS } from '../utils/constants.js';
 import { calculateSolarSystem, analyzeRooftop } from '../services/solarService.js';
+import { extractBillData } from '../services/ocrService.js';
+import { calculateSolarMetrics } from '../utils/solarCalculator.js';
 
 /**
  * @desc    Calculate solar system
@@ -23,6 +25,42 @@ export const calculate = asyncHandler(async (req, res) => {
   });
 
   sendSuccess(res, { report }, 'Solar calculation completed', HTTP_STATUS.CREATED);
+});
+
+/**
+ * @desc    Upload electricity bill and analyze with AI OCR
+ * @route   POST /api/solar/analyze-bill
+ * @access  Private
+ */
+export const analyzeBill = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Please upload an electricity bill image or PDF.');
+  }
+
+  // 1. Run AI OCR Engine
+  const extractedData = await extractBillData(req.file.buffer, req.file.mimetype);
+
+  if (!extractedData.units) {
+    throw new ApiError(HTTP_STATUS.UNPROCESSABLE, 'Could not detect monthly electricity units from the image. Please try a clearer picture.');
+  }
+
+  // 2. Run Solar Math Engine
+  const analysisReport = calculateSolarMetrics(
+    extractedData.units, 
+    extractedData.amount || (extractedData.units * 8) // fallback tariff if amount not found
+  );
+
+  // 3. Save to Database
+  const report = await SolarReport.create({
+    userId: req.user._id,
+    reportType: 'calculator',
+    status: 'completed',
+    inputs: { ...extractedData, source: 'ocr' },
+    results: analysisReport.recommendation,
+    monthlyProjection: analysisReport.financials, // Mapping to existing schema
+  });
+
+  sendSuccess(res, { extractedData, analysis: analysisReport, reportId: report._id }, 'Bill analyzed successfully', HTTP_STATUS.OK);
 });
 
 /**
