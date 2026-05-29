@@ -17,7 +17,9 @@ import StatCard from '../components/dashboard/StatCard';
 import AreaChartWidget from '../components/charts/AreaChartWidget';
 import BarChartWidget from '../components/charts/BarChartWidget';
 import PieChartWidget from '../components/charts/PieChartWidget';
-import RadialBarWidget from '../components/charts/RadialBarWidget';
+import LivePulseIndicator from '../components/dashboard/LivePulseIndicator';
+import WeatherWidget from '../components/dashboard/WeatherWidget';
+import CarbonTracker from '../components/dashboard/CarbonTracker';
 import { useAuth } from '../hooks/useAuth';
 import { getGreeting } from '../utils/helpers';
 import {
@@ -25,7 +27,6 @@ import {
   monthlySavingsData,
   recentActivity,
   energySourceData,
-  systemHealthData,
 } from '../utils/mockData';
 
 const statCards = [
@@ -57,9 +58,12 @@ export default function UserDashboard() {
       {/* Welcome Header */}
       <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-navy-900 dark:text-white">
-            {getGreeting()}, {user?.name?.split(' ')[0] || 'User'} 👋
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-navy-900 dark:text-white">
+              {getGreeting()}, {user?.name?.split(' ')[0] || 'User'} 👋
+            </h1>
+            <LivePulseIndicator />
+          </div>
           <p className="text-navy-500 dark:text-navy-400 mt-1">{today}</p>
         </div>
         <Link to="/dashboard/bill-upload" className="btn-primary inline-flex items-center gap-2 w-fit">
@@ -140,13 +144,8 @@ export default function UserDashboard() {
 
       {/* System Health + Quick Actions */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass p-6 rounded-2xl">
-          <RadialBarWidget
-            data={systemHealthData}
-            title="System Health"
-            height={280}
-          />
-        </div>
+        <WeatherWidget />
+        <CarbonTracker />
 
         <div className="glass p-6 rounded-2xl">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">Quick Actions</h3>

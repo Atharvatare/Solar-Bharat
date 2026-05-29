@@ -8,11 +8,17 @@ import {
   HiOutlineArrowDownTray,
 } from 'react-icons/hi2';
 import StatCard from '../components/dashboard/StatCard';
-import AreaChartWidget from '../components/charts/AreaChartWidget';
+import LineChartWidget from '../components/charts/LineChartWidget';
 import BarChartWidget from '../components/charts/BarChartWidget';
 import PieChartWidget from '../components/charts/PieChartWidget';
+import LivePulseIndicator from '../components/dashboard/LivePulseIndicator';
+import WeatherWidget from '../components/dashboard/WeatherWidget';
+import CarbonTracker from '../components/dashboard/CarbonTracker';
+import ROIProjectionCard from '../components/dashboard/ROIProjectionCard';
+import AIRecommendationsPanel from '../components/dashboard/AIRecommendationsPanel';
 import {
   hourlyEnergyData,
+  dailyGenerationData,
   monthlySavingsData,
   energySourceData,
 } from '../utils/mockData';
@@ -41,16 +47,24 @@ const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transiti
 export default function EnergyAnalyticsPage() {
   const [activePeriod, setActivePeriod] = useState('30 Days');
 
+  // Pick data based on period
+  const chartData = activePeriod === 'Today' ? hourlyEnergyData : dailyGenerationData;
+  const chartXKey = activePeriod === 'Today' ? 'hour' : 'day';
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      {/* Header */}
+      {/* Header with Live Indicator */}
       <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-navy-900 dark:text-white">
-            Energy Analytics
-          </h1>
-          <p className="text-navy-500 dark:text-navy-400 mt-1">Monitor your solar system performance</p>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-navy-900 dark:text-white">
+              Energy Analytics
+            </h1>
+            <LivePulseIndicator />
+          </div>
+          <p className="text-navy-500 dark:text-navy-400">Monitor your solar system performance in real-time</p>
         </div>
+        {/* Period Selector */}
         <div className="flex items-center gap-1 p-1 rounded-xl bg-navy-100 dark:bg-navy-800/60 overflow-x-auto no-scrollbar">
           {periods.map((p) => (
             <button
@@ -75,27 +89,43 @@ export default function EnergyAnalyticsPage() {
         ))}
       </motion.div>
 
-      {/* Main Chart */}
+      {/* Energy Production vs Consumption — Multi-line Chart */}
       <motion.div variants={item} className="glass p-6 rounded-2xl">
-        <AreaChartWidget
-          data={hourlyEnergyData}
-          dataKey="generated"
-          xAxisKey="hour"
-          title="Energy Production vs Consumption"
-          color="#F59E0B"
+        <LineChartWidget
+          data={chartData}
+          lines={[
+            { dataKey: 'generated', color: '#F59E0B', name: 'Generated (kWh)' },
+            { dataKey: 'consumed', color: '#3B82F6', name: 'Consumed (kWh)' },
+            { dataKey: 'exported', color: '#10B981', name: 'Exported (kWh)', dashed: true },
+          ]}
+          xAxisKey={chartXKey}
+          title={`Energy Production vs Consumption — ${activePeriod}`}
           height={350}
-          gradientFill
         />
       </motion.div>
 
-      {/* Comparison */}
+      {/* ROI Projection */}
+      <motion.div variants={item}>
+        <ROIProjectionCard />
+      </motion.div>
+
+      {/* Weather + Carbon Impact */}
+      <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <WeatherWidget />
+        <CarbonTracker />
+      </motion.div>
+
+      {/* Monthly Savings + Energy Mix */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass p-6 rounded-2xl">
           <BarChartWidget
             data={monthlySavingsData}
-            bars={[{ dataKey: 'savings', color: '#F59E0B', name: 'Savings (₹)' }]}
+            bars={[
+              { dataKey: 'savings', color: '#F59E0B', name: 'Savings (₹)' },
+              { dataKey: 'bill', color: '#64748b', name: 'Bill (₹)' },
+            ]}
             xAxisKey="month"
-            title="Monthly Savings Trend"
+            title="Monthly Savings vs Bills"
             height={280}
           />
         </div>
@@ -109,7 +139,12 @@ export default function EnergyAnalyticsPage() {
         </div>
       </motion.div>
 
-      {/* Performance Metrics */}
+      {/* AI Recommendations */}
+      <motion.div variants={item}>
+        <AIRecommendationsPanel />
+      </motion.div>
+
+      {/* System Performance */}
       <motion.div variants={item} className="glass p-6 rounded-2xl">
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">System Performance</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
