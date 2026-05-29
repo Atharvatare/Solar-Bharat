@@ -73,6 +73,6 @@ export const extractBillData = async (fileBuffer, mimeType) => {
 
   } catch (error) {
     logger.error('❌ OCR Extraction failed:', error);
-    throw new Error('Failed to analyze the electricity bill image. Please ensure the image is clear and readable.');
+    throw new Error(`OCR Failed: ${error.message}`);
   }
 };
