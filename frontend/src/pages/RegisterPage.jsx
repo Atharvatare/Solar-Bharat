@@ -110,6 +110,7 @@ export default function RegisterPage() {
       await register({
         name: form.name,
         email: form.email,
+        password: form.password,
         phone: `+91 ${form.phone}`,
       });
       toast.success('Account created successfully!');
