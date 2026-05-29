@@ -53,7 +53,7 @@ export const extractBillData = async (fileBuffer, mimeType) => {
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       contents: [prompt, imagePart],
       config: {
         temperature: 0.1, // Low temperature for high accuracy data extraction
