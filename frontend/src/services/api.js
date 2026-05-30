@@ -224,6 +224,11 @@ export const solarAPI = {
   rooftopAnalysis: (params) => api.post('/solar/rooftop-analysis', params),
   analyzeBill: (formData) => api.post('/solar/analyze-bill', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  }),
+  analyzeRooftopImage: (formData) => api.post('/solar/analyze-rooftop-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
   }),
   getReports: (params) => api.get('/solar/reports', { params }),
   getReport: (id) => api.get(`/solar/reports/${id}`),

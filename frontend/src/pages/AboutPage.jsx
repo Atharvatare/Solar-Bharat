@@ -41,62 +41,43 @@ const scaleUp = {
 /* ─── Data ─── */
 const teamMembers = [
   {
-    name: 'Aarav Sharma',
-    role: 'Founder & CEO',
-    initials: 'AS',
-    bio: 'Former IIT Delhi energy researcher with 10+ years in solar technology. Passionate about making clean energy accessible to every Indian household.',
+    name: 'Atharva Tare',
+    role: 'Founder & Developer',
+    initials: 'AT',
+    bio: 'Final-year Electrical Engineering student passionate about renewable energy and AI. Built Solar Bharat as a solo project to make solar energy accessible to every Indian household using cutting-edge AI technology.',
     gradient: 'from-solar-400 to-orange-500',
-  },
-  {
-    name: 'Meera Patel',
-    role: 'CTO',
-    initials: 'MP',
-    bio: 'AI/ML expert from IISc Bangalore. Leads the development of our proprietary rooftop analysis and energy prediction algorithms.',
-    gradient: 'from-blue-400 to-purple-500',
-  },
-  {
-    name: 'Vikram Reddy',
-    role: 'Head of Operations',
-    initials: 'VR',
-    bio: 'Supply chain veteran who has streamlined solar installations across 15+ states. Ensures every project is delivered on time.',
-    gradient: 'from-green-400 to-teal-500',
-  },
-  {
-    name: 'Sneha Nair',
-    role: 'Lead Designer',
-    initials: 'SN',
-    bio: 'Award-winning UX designer focused on simplifying complex solar data into beautiful, intuitive user experiences.',
-    gradient: 'from-pink-400 to-rose-500',
+    linkedin: 'https://www.linkedin.com/in/atharva-tare-68331028b',
+    roles: ['Founder', 'Full-Stack Developer', 'AI Engineer'],
   },
 ];
 
 const milestones = [
   {
-    year: '2024',
+    year: '2026',
     quarter: 'Q1',
-    title: 'Solar Bharat Founded',
-    description: 'Launched with a mission to democratize solar energy access across India using AI technology.',
+    title: 'Solar Bharat Conceived',
+    description: 'Atharva Tare envisioned a platform that combines AI with solar energy to help Indian households go green effortlessly.',
     icon: HiOutlineRocketLaunch,
   },
   {
-    year: '2024',
-    quarter: 'Q3',
-    title: '1,000 Users Milestone',
-    description: 'Reached our first thousand active users with a 95% satisfaction rate across 8 states.',
-    icon: HiOutlineUsers,
-  },
-  {
-    year: '2025',
-    quarter: 'Q1',
-    title: 'AI Engine Launch',
-    description: 'Deployed our next-gen AI engine with satellite imagery analysis and predictive energy modelling.',
+    year: '2026',
+    quarter: 'Q2',
+    title: 'Platform Built & Launched',
+    description: 'Full-stack platform deployed with React, Node.js, MongoDB, and Vercel. Features include AI bill analysis, rooftop detection, and solar calculator.',
     icon: HiOutlineCpuChip,
   },
   {
-    year: '2025',
-    quarter: 'Q4',
-    title: '50,000 Users',
-    description: 'Scaled to 50,000 users, 3,200 installations, and expanded operations to all 28 states.',
+    year: '2026',
+    quarter: 'Q2',
+    title: 'AI Engine Integrated',
+    description: 'Google Gemini Vision API integrated for intelligent electricity bill OCR and AI-powered rooftop analysis with shadow detection.',
+    icon: HiOutlineSparkles,
+  },
+  {
+    year: '2026',
+    quarter: 'Q3',
+    title: 'Going Live',
+    description: 'Solar Bharat goes live with interactive maps, real-time weather data, analytics dashboards, and AI recommendations for every user.',
     icon: HiOutlineGlobeAlt,
   },
 ];
@@ -228,6 +209,7 @@ function VisionMission() {
    TEAM
    ════════════════════════════════════════ */
 function TeamSection() {
+  const founder = teamMembers[0];
   return (
     <section className="section-spacing bg-navy-50/50 dark:bg-navy-900/40">
       <div className="page-container">
@@ -239,52 +221,68 @@ function TeamSection() {
           variants={fadeUp}
         >
           <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
-            <span className="text-navy-900 dark:text-white">Our </span>
-            <span className="text-solar-gradient">Team</span>
+            <span className="text-navy-900 dark:text-white">Meet the </span>
+            <span className="text-solar-gradient">Builder</span>
           </h2>
           <p className="text-navy-500 dark:text-navy-400 text-lg max-w-xl mx-auto">
-            The passionate minds driving India&apos;s solar revolution
+            The passionate mind behind India&apos;s AI-powered solar revolution
           </p>
         </motion.div>
 
         <motion.div
-          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="max-w-lg mx-auto"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          variants={staggerContainer}
+          variants={fadeUp}
         >
-          {teamMembers.map((member, i) => (
-            <motion.div
-              key={i}
-              variants={fadeUp}
-              custom={i}
-              whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="glass overflow-hidden group cursor-pointer"
-            >
-              {/* Gradient top strip */}
-              <div className={`h-24 bg-gradient-to-r ${member.gradient} relative`}>
-                <div className="absolute inset-0 bg-black/10" />
+          <motion.div
+            whileHover={{ y: -8, transition: { duration: 0.3 } }}
+            className="glass overflow-hidden group"
+          >
+            {/* Gradient top strip */}
+            <div className={`h-28 bg-gradient-to-r ${founder.gradient} relative`}>
+              <div className="absolute inset-0 bg-black/10" />
+            </div>
+
+            <div className="px-8 pb-8 -mt-12 relative text-center">
+              {/* Avatar */}
+              <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${founder.gradient} flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-white dark:ring-navy-800 mx-auto mb-5`}>
+                {founder.initials}
               </div>
 
-              <div className="px-6 pb-6 -mt-10 relative">
-                {/* Avatar */}
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${member.gradient} flex items-center justify-center text-white font-bold text-xl shadow-lg ring-4 ring-white dark:ring-navy-800 mb-4`}>
-                  {member.initials}
-                </div>
+              <h3 className="font-display text-2xl font-bold text-navy-900 dark:text-white">
+                {founder.name}
+              </h3>
+              <p className="text-sm text-solar-600 dark:text-solar-400 font-semibold mb-3">
+                {founder.role}
+              </p>
 
-                <h3 className="font-display text-lg font-semibold text-navy-900 dark:text-white">
-                  {member.name}
-                </h3>
-                <p className="text-sm text-solar-600 dark:text-solar-400 font-medium mb-3">
-                  {member.role}
-                </p>
-                <p className="text-sm text-navy-500 dark:text-navy-400 leading-relaxed">
-                  {member.bio}
-                </p>
+              {/* Role badges */}
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                {founder.roles.map((role) => (
+                  <span key={role} className="px-3 py-1 rounded-full text-xs font-medium bg-solar-500/10 text-solar-600 dark:text-solar-400 border border-solar-500/20">
+                    {role}
+                  </span>
+                ))}
               </div>
-            </motion.div>
-          ))}
+
+              <p className="text-sm text-navy-500 dark:text-navy-400 leading-relaxed mb-5">
+                {founder.bio}
+              </p>
+
+              {/* LinkedIn */}
+              <a
+                href={founder.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A66C2] text-white text-sm font-semibold hover:bg-[#004182] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                Connect on LinkedIn
+              </a>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>

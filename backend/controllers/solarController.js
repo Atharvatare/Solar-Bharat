@@ -4,6 +4,7 @@ import { HTTP_STATUS } from '../utils/constants.js';
 import { calculateSolarSystem, analyzeRooftop } from '../services/solarService.js';
 import { extractBillData } from '../services/ocrService.js';
 import { calculateSolarMetrics } from '../utils/solarCalculator.js';
+import { analyzeRooftopImage as aiRooftopAnalysis } from '../services/rooftopService.js';
 
 /**
  * @desc    Calculate solar system
@@ -83,6 +84,27 @@ export const rooftopAnalysis = asyncHandler(async (req, res) => {
   });
 
   sendSuccess(res, { report }, 'Rooftop analysis completed', HTTP_STATUS.CREATED);
+});
+
+/**
+ * @desc    AI Rooftop Image Analysis (Gemini Vision)
+ * @route   POST /api/solar/analyze-rooftop-image
+ * @access  Private
+ */
+export const analyzeRooftopImageController = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Please upload an aerial/satellite rooftop image.');
+  }
+
+  const location = {
+    lat: req.body.lat || null,
+    lng: req.body.lng || null,
+    address: req.body.address || '',
+  };
+
+  const analysisData = await aiRooftopAnalysis(req.file.buffer, req.file.mimetype, location);
+
+  sendSuccess(res, { analysis: analysisData, location }, 'Rooftop image analyzed successfully', HTTP_STATUS.OK);
 });
 
 /**
