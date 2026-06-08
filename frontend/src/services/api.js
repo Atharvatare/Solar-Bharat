@@ -236,7 +236,7 @@ export const solarAPI = {
 };
 
 export const chatAPI = {
-  sendMessage: (message, sessionId) => api.post('/chat/message', { message, sessionId }),
+  sendMessage: (message, sessionId) => api.post('/chat/message', { message, sessionId }, { timeout: 60000 }),
   getSessions: () => api.get('/chat/sessions'),
   getSession: (sessionId) => api.get(`/chat/sessions/${sessionId}`),
   deleteSession: (sessionId) => api.delete(`/chat/sessions/${sessionId}`),

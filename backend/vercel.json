@@ -1,11 +1,17 @@
 {
   "version": 2,
+  "functions": {
+    "server.js": {
+      "maxDuration": 60
+    }
+  },
   "builds": [
     {
       "src": "server.js",
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
+          "ai-services/**",
           "config/**",
           "controllers/**",
           "middleware/**",
