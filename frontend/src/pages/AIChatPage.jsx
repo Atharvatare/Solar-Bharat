@@ -5,25 +5,28 @@ import {
   HiOutlineCpuChip,
   HiOutlineUser,
   HiOutlineSparkles,
+  HiOutlineTrash,
 } from 'react-icons/hi2';
-import { sampleChatMessages, chatSuggestions } from '../utils/mockData';
+import { chatAPI } from '../services/api';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-
-const aiResponses = {
-  subsidy: "Great question! Under the **PM Surya Ghar Muft Bijli Yojana**, you can get subsidies of up to ₹78,000 for a 3kW system. For systems above 3kW (up to 10kW), the subsidy is ₹78,000 + ₹30,000 per additional kW. The application process is online through the official portal. Would you like me to check your eligibility?",
-  save: "A typical 5kW residential solar system in India can save you **₹3,000–₹5,000 per month** depending on your location and consumption. Over 25 years, that's approximately **₹12–15 lakhs** in total savings! The payback period is usually 3-4 years after subsidies.",
-  panel: "Solar panel maintenance is straightforward! **Clean your panels every 2-3 weeks** with plain water and a soft cloth. Avoid harsh chemicals. During monsoon, rain does most of the cleaning. In dusty areas, more frequent cleaning may be needed. Annual professional inspection is recommended.",
-  net: "**Net metering** allows you to export excess solar energy to the grid and earn credits on your bill. When your panels produce more than you consume, the surplus goes to the grid. Your meter runs backward, effectively reducing your bill. Most Indian states support net metering — check with your local DISCOM for specific policies.",
-  default: "Solar energy is one of the fastest-growing sectors in India. With over **300 sunny days** in most regions, India has enormous solar potential. The government aims to achieve **500 GW of renewable energy by 2030**. Installing solar panels not only saves money but also contributes to a cleaner environment. What specific aspect would you like to know more about?"
-};
+import toast from 'react-hot-toast';
 
 const topics = [
-  { name: 'Subsidies', desc: 'Government incentives & schemes' },
-  { name: 'Net Metering', desc: 'Export energy to the grid' },
-  { name: 'Maintenance', desc: 'Panel care & cleaning' },
-  { name: 'Cost & Savings', desc: 'Investment & ROI details' },
-  { name: 'Installation', desc: 'Setup process & timeline' },
-  { name: 'Environment', desc: 'Carbon footprint reduction' },
+  { name: 'Subsidies', desc: 'Government incentives & schemes', prompt: 'What solar subsidies are available in India under PM Surya Ghar Yojana?' },
+  { name: 'Net Metering', desc: 'Export energy to the grid', prompt: 'How does net metering work for rooftop solar in India?' },
+  { name: 'Maintenance', desc: 'Panel care & cleaning', prompt: 'How should I maintain and clean my solar panels?' },
+  { name: 'Cost & ROI', desc: 'Investment & returns', prompt: 'What is the cost and ROI of a 5kW solar system in India?' },
+  { name: 'Installation', desc: 'Setup process & timeline', prompt: 'What is the step-by-step process to install rooftop solar?' },
+  { name: 'Battery Storage', desc: 'Backup power options', prompt: 'Should I add battery storage to my solar system? What are the options?' },
+];
+
+const quickSuggestions = [
+  'How much can I save with solar?',
+  'What size solar system do I need?',
+  'Are solar panels worth it in India?',
+  'How to apply for solar subsidy?',
+  'Explain my electricity bill',
+  'Best solar panels for home?',
 ];
 
 const solarFacts = [
@@ -32,12 +35,21 @@ const solarFacts = [
   "Solar panels can last 25-30 years with minimal maintenance.",
   "India's largest solar park is in Bhadla, Rajasthan — 2,245 MW capacity.",
   "Solar energy is now cheaper than coal power in India.",
+  "PM Surya Ghar scheme offers up to ₹78,000 subsidy for 3kW systems.",
 ];
 
 export default function AIChatPage() {
-  const [messages, setMessages] = useState(sampleChatMessages);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      role: 'assistant',
+      content: "Hello! I'm **Solar Bharat AI Assistant** ☀️ — powered by Google Gemini AI.\n\nI can help you with:\n• 📋 Government subsidies & schemes\n• 💰 Solar cost, savings & ROI\n• 🔧 Panel maintenance tips\n• ⚡ Net metering & grid export\n• 🏠 Installation guidance\n• 🌱 Environmental impact\n\nAsk me anything about solar energy!",
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    }
+  ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const messagesEndRef = useRef(null);
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const [fact] = useState(solarFacts[Math.floor(Math.random() * solarFacts.length)]);
@@ -48,18 +60,9 @@ export default function AIChatPage() {
 
   useEffect(() => { scrollToBottom(); }, [messages, isTyping]);
 
-  const getAIResponse = (msg) => {
-    const lower = msg.toLowerCase();
-    if (lower.includes('subsidy') || lower.includes('scheme') || lower.includes('eligible')) return aiResponses.subsidy;
-    if (lower.includes('save') || lower.includes('saving') || lower.includes('cost') || lower.includes('money')) return aiResponses.save;
-    if (lower.includes('panel') || lower.includes('clean') || lower.includes('maintenance')) return aiResponses.panel;
-    if (lower.includes('net meter') || lower.includes('metering') || lower.includes('export')) return aiResponses.net;
-    return aiResponses.default;
-  };
-
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     const msgText = text || input.trim();
-    if (!msgText) return;
+    if (!msgText || isTyping) return;
 
     const userMsg = {
       id: Date.now(),
@@ -72,16 +75,43 @@ export default function AIChatPage() {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const response = await chatAPI.sendMessage(msgText, sessionId);
+      const data = response.data.data;
+
+      if (!sessionId && data.sessionId) {
+        setSessionId(data.sessionId);
+      }
+
       const aiMsg = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: getAIResponse(msgText),
+        content: data.response,
         timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, aiMsg]);
+    } catch (err) {
+      const aiMsg = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: "I'm sorry, I couldn't process your request right now. Please try again in a moment.",
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      id: Date.now(),
+      role: 'assistant',
+      content: "Chat cleared! How can I help you today? ☀️",
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    }]);
+    setSessionId(null);
+    toast.success('Chat cleared');
   };
 
   return (
@@ -89,17 +119,22 @@ export default function AIChatPage() {
       {/* Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Chat Header */}
-        <div className="glass p-4 rounded-2xl mb-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-solar-400 to-solar-600 flex items-center justify-center">
-            <HiOutlineCpuChip className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-navy-900 dark:text-white">Solar AI Assistant</h2>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="glass p-4 rounded-2xl mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-solar-400 to-solar-600 flex items-center justify-center">
+              <HiOutlineCpuChip className="w-5 h-5 text-white" />
             </div>
-            <p className="text-xs text-navy-500 dark:text-navy-400">Powered by AI · Online</p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-navy-900 dark:text-white">Solar AI Assistant</h2>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <p className="text-xs text-navy-500 dark:text-navy-400">Powered by Google Gemini AI · Online</p>
+            </div>
           </div>
+          <button onClick={clearChat} className="p-2 rounded-lg hover:bg-navy-100 dark:hover:bg-navy-800 transition-colors" title="Clear chat">
+            <HiOutlineTrash className="w-5 h-5 text-navy-400" />
+          </button>
         </div>
 
         {/* Messages */}
@@ -126,8 +161,8 @@ export default function AIChatPage() {
                   ? 'bg-solar-500 text-white rounded-2xl rounded-br-md'
                   : 'glass rounded-2xl rounded-bl-md'
               }`}>
-                <p className={msg.role === 'assistant' ? 'text-navy-800 dark:text-navy-100' : ''}
-                  dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
+                <p className={msg.role === 'assistant' ? 'text-navy-800 dark:text-navy-100 whitespace-pre-wrap' : 'whitespace-pre-wrap'}
+                  dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }}
                 />
                 <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/60' : 'text-navy-400 dark:text-navy-500'}`}>
                   {msg.timestamp}
@@ -139,21 +174,14 @@ export default function AIChatPage() {
           {/* Typing Indicator */}
           <AnimatePresence>
             {isTyping && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="flex gap-3"
-              >
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-solar-400 to-solar-600 flex items-center justify-center flex-shrink-0">
                   <HiOutlineCpuChip className="w-4 h-4 text-white" />
                 </div>
                 <div className="glass px-5 py-4 rounded-2xl rounded-bl-md">
                   <div className="flex gap-1.5">
                     {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-2 h-2 bg-solar-500 rounded-full"
+                      <motion.div key={i} className="w-2 h-2 bg-solar-500 rounded-full"
                         animate={{ y: [0, -6, 0] }}
                         transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                       />
@@ -168,7 +196,7 @@ export default function AIChatPage() {
 
         {/* Quick Suggestions */}
         <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
-          {chatSuggestions.map((sug) => (
+          {quickSuggestions.map((sug) => (
             <button
               key={sug}
               onClick={() => sendMessage(sug)}
@@ -211,7 +239,7 @@ export default function AIChatPage() {
               {topics.map((topic) => (
                 <button
                   key={topic.name}
-                  onClick={() => sendMessage(`Tell me about ${topic.name.toLowerCase()}`)}
+                  onClick={() => sendMessage(topic.prompt)}
                   className="w-full text-left p-3 rounded-xl hover:bg-solar-500/10 transition-colors group"
                 >
                   <p className="text-sm font-medium text-navy-800 dark:text-navy-200 group-hover:text-solar-500">{topic.name}</p>

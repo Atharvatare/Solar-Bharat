@@ -40,8 +40,8 @@ export const sendMessage = asyncHandler(async (req, res) => {
     timestamp: new Date(),
   });
 
-  // Generate AI response
-  const aiResponse = generateResponse(message);
+  // Generate AI response (Gemini AI with fallback)
+  const aiResponse = await generateResponse(message, chat.messages);
 
   // Add AI response
   chat.messages.push({

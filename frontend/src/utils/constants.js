@@ -16,7 +16,9 @@ export const DASHBOARD_LINKS = [
   { name: 'Solar Calculator', path: '/dashboard/calculator', icon: 'HiOutlineCalculator' },
   { name: 'Bill Upload', path: '/dashboard/bill-upload', icon: 'HiOutlineDocumentArrowUp' },
   { name: 'Rooftop Analysis', path: '/dashboard/rooftop', icon: 'HiOutlineBuildingOffice' },
+  { name: 'Solar Forecast', path: '/dashboard/forecast', icon: 'HiOutlineSun' },
   { name: 'AI Assistant', path: '/dashboard/ai-chat', icon: 'HiOutlineCpuChip' },
+  { name: 'Reports', path: '/dashboard/reports', icon: 'HiOutlineDocumentArrowDown' },
   { name: 'Settings', path: '/dashboard/settings', icon: 'HiOutlineCog6Tooth' },
 ];
 

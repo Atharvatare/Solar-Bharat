@@ -25,6 +25,8 @@ const SolarCalculatorPage = lazy(() => import('../pages/SolarCalculatorPage'));
 const EnergyAnalyticsPage = lazy(() => import('../pages/EnergyAnalyticsPage'));
 const RooftopAnalysisPage = lazy(() => import('../pages/RooftopAnalysisPage'));
 const AIChatPage = lazy(() => import('../pages/AIChatPage'));
+const SolarForecastPage = lazy(() => import('../pages/SolarForecastPage'));
+const ReportsPage = lazy(() => import('../pages/ReportsPage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 
 export default function AppRoutes() {
@@ -60,6 +62,8 @@ export default function AppRoutes() {
           <Route path="/dashboard/bill-upload" element={<BillUploadPage />} />
           <Route path="/dashboard/rooftop" element={<RooftopAnalysisPage />} />
           <Route path="/dashboard/ai-chat" element={<AIChatPage />} />
+          <Route path="/dashboard/forecast" element={<SolarForecastPage />} />
+          <Route path="/dashboard/reports" element={<ReportsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
         </Route>
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  calculate, rooftopAnalysis, getReports, getReport, deleteReport, analyzeBill, analyzeRooftopImageController
+  calculate, rooftopAnalysis, getReports, getReport, deleteReport, analyzeBill, analyzeRooftopImageController, solarForecast
 } from '../controllers/solarController.js';
 import multer from 'multer';
 
@@ -20,6 +20,7 @@ router.post('/calculate', calculateValidator, validate, calculate);
 router.post('/rooftop-analysis', rooftopAnalysisValidator, validate, rooftopAnalysis);
 router.post('/analyze-bill', upload.single('bill'), analyzeBill);
 router.post('/analyze-rooftop-image', upload.single('rooftopImage'), analyzeRooftopImageController);
+router.get('/solar-forecast', solarForecast);
 router.get('/reports', getReports);
 router.get('/reports/:id', getReport);
 router.delete('/reports/:id', deleteReport);

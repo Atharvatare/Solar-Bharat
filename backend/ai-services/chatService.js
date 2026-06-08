@@ -1,4 +1,24 @@
-// Knowledge base for solar energy Q&A
+import { GoogleGenAI } from '@google/genai';
+import logger from '../utils/logger.js';
+
+const ai = new GoogleGenAI({});
+
+// ── System prompt for the Solar Bharat AI Assistant ──────────────────────────
+const SYSTEM_PROMPT = `You are Solar Bharat AI Assistant — India's expert on solar energy. You help users with:
+- Government subsidies (PM Surya Ghar Muft Bijli Yojana)
+- Solar system sizing, cost, and ROI
+- Net metering and grid export
+- Panel maintenance and cleaning
+- Rooftop analysis guidance
+- Installation process and timeline
+- Environmental impact
+
+Always respond in a helpful, conversational tone. Use **bold** for important points.
+Keep responses concise (2-3 paragraphs max).
+If unsure, say so honestly.
+Always relate answers to the Indian context.`;
+
+// ── Knowledge base for fallback responses ────────────────────────────────────
 const KNOWLEDGE_BASE = {
   subsidy: {
     keywords: ['subsidy', 'scheme', 'eligible', 'government', 'pm surya', 'surya ghar', 'incentive', 'rebate'],
@@ -36,28 +56,72 @@ const KNOWLEDGE_BASE = {
 
 const DEFAULT_RESPONSE = `That's a great question about solar energy! India has enormous solar potential with over **300 sunny days** in most regions.\n\nI can help you with:\n• 📋 **Subsidies & Schemes** — Government incentives\n• 💰 **Cost & Savings** — Investment and ROI\n• 🔧 **Maintenance** — Panel care tips\n• 🏠 **Installation** — Process and timeline\n• ⚡ **Net Metering** — Sell excess power\n• 🌱 **Environmental Impact** — Carbon offset\n\nWhat would you like to know more about?`;
 
-/**
- * Generate AI chat response based on user message
- */
-export const generateResponse = (userMessage) => {
+// ── Fallback: keyword-based response (used when Gemini is unavailable) ───────
+const fallbackResponse = (userMessage) => {
   const lower = userMessage.toLowerCase();
-  
-  // Score each topic by keyword matches
+
   let bestMatch = null;
   let bestScore = 0;
-  
-  for (const [topic, data] of Object.entries(KNOWLEDGE_BASE)) {
+
+  for (const [, data] of Object.entries(KNOWLEDGE_BASE)) {
     const score = data.keywords.reduce((sum, keyword) => {
       return sum + (lower.includes(keyword) ? 1 : 0);
     }, 0);
-    
+
     if (score > bestScore) {
       bestScore = score;
       bestMatch = data;
     }
   }
-  
+
   return bestScore > 0 ? bestMatch.response : DEFAULT_RESPONSE;
+};
+
+// ── Primary: Gemini AI response ──────────────────────────────────────────────
+
+/**
+ * Generate AI chat response using Google Gemini, with fallback to knowledge base.
+ * @param {string} userMessage         The user's latest message
+ * @param {Array}  conversationHistory  Previous messages (role + content)
+ * @returns {Promise<string>} AI-generated response text
+ */
+export const generateResponse = async (userMessage, conversationHistory = []) => {
+  // Build conversation context from last 6 messages
+  const recentHistory = conversationHistory.slice(-6).map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+
+  const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  let response = null;
+
+  for (const model of modelsToTry) {
+    try {
+      response = await ai.models.generateContent({
+        model,
+        contents: [
+          { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
+          { role: 'model', parts: [{ text: 'Understood! I am Solar Bharat AI Assistant, India\'s expert on solar energy. I\'m ready to help with subsidies, system sizing, net metering, maintenance, installation, and more. How can I assist you today?' }] },
+          ...recentHistory,
+          { role: 'user', parts: [{ text: userMessage }] },
+        ],
+        config: { temperature: 0.7, maxOutputTokens: 1024 },
+      });
+      break; // success — stop trying models
+    } catch (err) {
+      logger.warn(`Chat AI model ${model} failed: ${err.message}`);
+      // Retry with next model on 404 (model not found) or 503 (service unavailable)
+      if (err.message.includes('404') || err.message.includes('503')) continue;
+      throw err;
+    }
+  }
+
+  if (!response) {
+    logger.warn('All Gemini models failed — falling back to knowledge base');
+    return fallbackResponse(userMessage);
+  }
+
+  return response.text;
 };
 
 /**
@@ -72,12 +136,12 @@ export const generateSessionId = () => {
  */
 export const classifyTopic = (message) => {
   const lower = message.toLowerCase();
-  
+
   for (const [topic, data] of Object.entries(KNOWLEDGE_BASE)) {
     const hasMatch = data.keywords.some((kw) => lower.includes(kw));
     if (hasMatch) return topic;
   }
-  
+
   return 'general';
 };
 

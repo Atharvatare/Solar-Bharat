@@ -5,6 +5,7 @@ import { calculateSolarSystem, analyzeRooftop } from '../services/solarService.j
 import { extractBillData } from '../services/ocrService.js';
 import { calculateSolarMetrics } from '../utils/solarCalculator.js';
 import { analyzeRooftopImage as aiRooftopAnalysis } from '../services/rooftopService.js';
+import { getSolarForecast } from '../services/weatherForecastService.js';
 
 /**
  * @desc    Calculate solar system
@@ -150,4 +151,20 @@ export const deleteReport = asyncHandler(async (req, res) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Report not found');
   }
   sendSuccess(res, null, 'Report deleted');
+});
+
+/**
+ * @desc    Get solar forecast for a location
+ * @route   GET /api/solar/solar-forecast
+ * @access  Private
+ */
+export const solarForecast = asyncHandler(async (req, res) => {
+  const { lat, lng } = req.query;
+
+  if (!lat || !lng) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'lat and lng query params required');
+  }
+
+  const forecast = await getSolarForecast(parseFloat(lat), parseFloat(lng));
+  sendSuccess(res, { forecast }, 'Solar forecast retrieved');
 });
