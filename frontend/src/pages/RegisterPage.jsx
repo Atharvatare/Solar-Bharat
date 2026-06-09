@@ -76,9 +76,7 @@ export default function RegisterPage() {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    if (!form.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^[6-9]\d{9}$/.test(form.phone.replace(/\s/g, ''))) {
+    if (form.phone.trim() && !/^[6-9]\d{9}$/.test(form.phone.replace(/\s/g, ''))) {
       newErrors.phone = 'Enter a valid 10-digit Indian mobile number';
     }
 
@@ -86,6 +84,12 @@ export default function RegisterPage() {
       newErrors.password = 'Password is required';
     } else if (form.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[a-z]/.test(form.password)) {
+      newErrors.password = 'Password must contain a lowercase letter';
+    } else if (!/[A-Z]/.test(form.password)) {
+      newErrors.password = 'Password must contain an uppercase letter';
+    } else if (!/\d/.test(form.password)) {
+      newErrors.password = 'Password must contain a number';
     }
 
     if (!form.confirmPassword) {
@@ -107,16 +111,28 @@ export default function RegisterPage() {
     if (!validate()) return;
 
     try {
-      await register({
+      const regData = {
         name: form.name,
         email: form.email,
         password: form.password,
-        phone: `+91 ${form.phone}`,
-      });
+      };
+      // Only include phone if user filled it
+      if (form.phone.trim()) {
+        regData.phone = `+91${form.phone.replace(/\s/g, '')}`;
+      }
+      await register(regData);
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err?.message || 'Registration failed. Please try again.');
+      // Show specific field errors from backend validation
+      if (err?.errors?.length > 0) {
+        const fieldErrors = {};
+        err.errors.forEach(e => { if (e.field) fieldErrors[e.field] = e.message; });
+        setErrors(fieldErrors);
+        toast.error(err.errors[0].message || 'Validation failed');
+      } else {
+        toast.error(err?.message || 'Registration failed. Please try again.');
+      }
     }
   };
 

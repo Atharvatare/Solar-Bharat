@@ -86,42 +86,64 @@ const fallbackResponse = (userMessage) => {
  * @returns {Promise<string>} AI-generated response text
  */
 export const generateResponse = async (userMessage, conversationHistory = []) => {
-  // Build conversation context from last 6 messages
-  const recentHistory = conversationHistory.slice(-6).map((m) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  try {
+    // Build conversation context from last 6 messages, excluding the most recent
+    // (since the controller already added the current user message to history before calling us)
+    const historyWithoutCurrent = conversationHistory.slice(0, -1);
+    const recentHistory = historyWithoutCurrent.slice(-6).map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
 
-  const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  let response = null;
-
-  for (const model of modelsToTry) {
-    try {
-      response = await ai.models.generateContent({
-        model,
-        contents: [
-          { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
-          { role: 'model', parts: [{ text: 'Understood! I am Solar Bharat AI Assistant, India\'s expert on solar energy. I\'m ready to help with subsidies, system sizing, net metering, maintenance, installation, and more. How can I assist you today?' }] },
-          ...recentHistory,
-          { role: 'user', parts: [{ text: userMessage }] },
-        ],
-        config: { temperature: 0.7, maxOutputTokens: 1024 },
-      });
-      break; // success — stop trying models
-    } catch (err) {
-      logger.warn(`Chat AI model ${model} failed: ${err.message}`);
-      // Retry with next model on 404 (model not found) or 503 (service unavailable)
-      if (err.message.includes('404') || err.message.includes('503')) continue;
-      throw err;
+    // Ensure alternating user/model roles (Gemini requires this)
+    const cleanedHistory = [];
+    let lastRole = 'model'; // system prompt response was 'model', so next should be 'user'
+    for (const msg of recentHistory) {
+      if (msg.role !== lastRole) {
+        cleanedHistory.push(msg);
+        lastRole = msg.role;
+      }
     }
-  }
 
-  if (!response) {
-    logger.warn('All Gemini models failed — falling back to knowledge base');
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+    for (const model of modelsToTry) {
+      try {
+        logger.info(`Chat AI: trying model ${model}`);
+        const response = await ai.models.generateContent({
+          model,
+          contents: [
+            { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
+            { role: 'model', parts: [{ text: 'Understood! I am Solar Bharat AI Assistant, India\'s expert on solar energy. I\'m ready to help with subsidies, system sizing, net metering, maintenance, installation, and more. How can I assist you today?' }] },
+            ...cleanedHistory,
+            { role: 'user', parts: [{ text: userMessage }] },
+          ],
+          config: { temperature: 0.7, maxOutputTokens: 1024 },
+        });
+
+        // Extract text safely
+        const text = response?.text || response?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim().length > 0) {
+          logger.info(`Chat AI: success with ${model}`);
+          return text;
+        }
+
+        logger.warn(`Chat AI: ${model} returned empty response`);
+        continue;
+      } catch (err) {
+        logger.warn(`Chat AI model ${model} failed: ${err.message}`);
+        continue; // Always try next model on ANY error
+      }
+    }
+
+    // All models failed — use knowledge base
+    logger.warn('Chat AI: all Gemini models failed, using knowledge base fallback');
+    return fallbackResponse(userMessage);
+  } catch (outerErr) {
+    // Absolute last resort — should never reach here, but just in case
+    logger.error(`Chat AI: unexpected error: ${outerErr.message}`);
     return fallbackResponse(userMessage);
   }
-
-  return response.text;
 };
 
 /**
