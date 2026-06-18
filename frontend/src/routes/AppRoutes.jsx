@@ -8,16 +8,18 @@ import PublicLayout from '../layouts/PublicLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 import AuthLayout from '../layouts/AuthLayout';
 
-// Lazy-loaded pages
+// Lazy-loaded pages — Public
 const LandingPage = lazy(() => import('../pages/LandingPage'));
 const AboutPage = lazy(() => import('../pages/AboutPage'));
 const FeaturesPage = lazy(() => import('../pages/FeaturesPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
 
+// Auth
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 
+// Dashboard
 const UserDashboard = lazy(() => import('../pages/UserDashboard'));
 const AdminDashboard = lazy(() => import('../pages/AdminDashboard'));
 const BillUploadPage = lazy(() => import('../pages/BillUploadPage'));
@@ -28,6 +30,19 @@ const AIChatPage = lazy(() => import('../pages/AIChatPage'));
 const SolarForecastPage = lazy(() => import('../pages/SolarForecastPage'));
 const ReportsPage = lazy(() => import('../pages/ReportsPage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const IoTDashboardPage = lazy(() => import('../pages/IoTDashboardPage'));
+
+// Admin (Phase 11)
+const AdminUsersPage = lazy(() => import('../pages/admin/AdminUsersPage'));
+const AdminVendorsPage = lazy(() => import('../pages/admin/AdminVendorsPage'));
+const AdminProductsPage = lazy(() => import('../pages/admin/AdminProductsPage'));
+const AdminLeadsPage = lazy(() => import('../pages/admin/AdminLeadsPage'));
+const AdminQuotationsPage = lazy(() => import('../pages/admin/AdminQuotationsPage'));
+const AdminBookingsPage = lazy(() => import('../pages/admin/AdminBookingsPage'));
+
+// Marketplace (Phase 11)
+const MarketplacePage = lazy(() => import('../pages/marketplace/MarketplacePage'));
+const ProductComparePage = lazy(() => import('../pages/marketplace/ProductComparePage'));
 
 export default function AppRoutes() {
   return (
@@ -39,6 +54,8 @@ export default function AppRoutes() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/marketplace/compare" element={<ProductComparePage />} />
         </Route>
 
         {/* Auth Routes */}
@@ -63,6 +80,7 @@ export default function AppRoutes() {
           <Route path="/dashboard/rooftop" element={<RooftopAnalysisPage />} />
           <Route path="/dashboard/ai-chat" element={<AIChatPage />} />
           <Route path="/dashboard/forecast" element={<SolarForecastPage />} />
+          <Route path="/dashboard/iot" element={<IoTDashboardPage />} />
           <Route path="/dashboard/reports" element={<ReportsPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
         </Route>
@@ -76,6 +94,12 @@ export default function AppRoutes() {
           }
         >
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/vendors" element={<AdminVendorsPage />} />
+          <Route path="/admin/products" element={<AdminProductsPage />} />
+          <Route path="/admin/leads" element={<AdminLeadsPage />} />
+          <Route path="/admin/quotations" element={<AdminQuotationsPage />} />
+          <Route path="/admin/bookings" element={<AdminBookingsPage />} />
         </Route>
 
         {/* Catch-all redirect */}

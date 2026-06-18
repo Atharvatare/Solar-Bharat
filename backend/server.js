@@ -24,6 +24,8 @@ import solarRoutes from './routes/solarRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import marketplaceRoutes from './routes/marketplaceRoutes.js';
+import iotRoutes from './routes/iotRoutes.js';
 
 // ES module dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -142,6 +144,8 @@ app.use('/api/solar', solarRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/iot', iotRoutes);
 
 // ============================================
 // HEALTH CHECK

@@ -252,17 +252,61 @@ export const notificationAPI = {
 };
 
 export const adminAPI = {
+  // Dashboard & Analytics
   getDashboard: () => api.get('/admin/dashboard'),
   getAnalytics: () => api.get('/admin/analytics'),
   getBills: (params) => api.get('/admin/bills', { params }),
-  getUsers: (params) => api.get('/users', { params }),
-  updateUserRole: (id, role) => api.put(`/users/${id}/role`, { role }),
-  toggleUserStatus: (id) => api.put(`/users/${id}/status`),
+
+  // Users
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+
+  // Vendors
   getVendors: (params) => api.get('/admin/vendors', { params }),
   createVendor: (data) => api.post('/admin/vendors', data),
+  updateVendor: (id, data) => api.put(`/admin/vendors/${id}`, data),
+  deleteVendor: (id) => api.delete(`/admin/vendors/${id}`),
+  verifyVendor: (id) => api.put(`/admin/vendors/${id}/verify`),
+
+  // Products
   getProducts: (params) => api.get('/admin/products', { params }),
   createProduct: (data) => api.post('/admin/products', data),
+  updateProduct: (id, data) => api.put(`/admin/products/${id}`, data),
+  deleteProduct: (id) => api.delete(`/admin/products/${id}`),
+
+  // Quotations
+  getQuotations: (params) => api.get('/admin/quotations', { params }),
+  createQuotation: (data) => api.post('/admin/quotations', data),
+  updateQuotation: (id, data) => api.put(`/admin/quotations/${id}`, data),
+
+  // Leads
+  getLeads: (params) => api.get('/admin/leads', { params }),
+  createLead: (data) => api.post('/admin/leads', data),
+  updateLead: (id, data) => api.put(`/admin/leads/${id}`, data),
+
+  // Bookings
+  getBookings: (params) => api.get('/admin/bookings', { params }),
+  createBooking: (data) => api.post('/admin/bookings', data),
+  updateBooking: (id, data) => api.put(`/admin/bookings/${id}`, data),
+
+  // Broadcast
   broadcast: (data) => api.post('/admin/notifications/broadcast', data),
+};
+
+export const marketplaceAPI = {
+  getProducts: (params) => api.get('/marketplace/products', { params }),
+  getProduct: (id) => api.get(`/marketplace/products/${id}`),
+  compareProducts: (productIds) => api.post('/marketplace/products/compare', { productIds }),
+  getVendors: (params) => api.get('/marketplace/vendors', { params }),
+};
+
+export const iotAPI = {
+  getDevices: () => api.get('/iot/devices'),
+  getLiveReading: (deviceId) => api.get(`/iot/devices/${deviceId}/live`),
+  getReadings: (deviceId, params) => api.get(`/iot/devices/${deviceId}/readings`, { params }),
+  getDailyStats: (deviceId) => api.get(`/iot/devices/${deviceId}/stats`),
+  registerDevice: (data) => api.post('/iot/devices', data),
 };
 
 export default api;

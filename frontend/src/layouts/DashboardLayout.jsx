@@ -7,7 +7,9 @@ import {
   HiOutlineCalculator,
   HiOutlineDocumentArrowUp,
   HiOutlineDocumentArrowDown,
+  HiOutlineDocumentText,
   HiOutlineBuildingOffice,
+  HiOutlineBuildingStorefront,
   HiOutlineCpuChip,
   HiOutlineCog6Tooth,
   HiOutlineShieldCheck,
@@ -19,6 +21,10 @@ import {
   HiOutlineMagnifyingGlass,
   HiOutlineChevronRight,
   HiOutlineSun,
+  HiOutlineSignal,
+  HiOutlineCube,
+  HiOutlineFunnel,
+  HiOutlineCalendarDays,
 } from 'react-icons/hi2';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import NotificationBell from '../components/ui/NotificationBell';
@@ -33,12 +39,18 @@ const ICON_MAP = {
   HiOutlineCalculator,
   HiOutlineDocumentArrowUp,
   HiOutlineDocumentArrowDown,
+  HiOutlineDocumentText,
   HiOutlineBuildingOffice,
+  HiOutlineBuildingStorefront,
   HiOutlineCpuChip,
   HiOutlineCog6Tooth,
   HiOutlineShieldCheck,
   HiOutlineUsers,
   HiOutlineSun,
+  HiOutlineSignal,
+  HiOutlineCube,
+  HiOutlineFunnel,
+  HiOutlineCalendarDays,
 };
 
 /* ─── Sun Logo SVG (compact) ─── */

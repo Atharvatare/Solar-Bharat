@@ -6,6 +6,9 @@ import Notification from '../models/Notification.js';
 import ChatHistory from '../models/ChatHistory.js';
 import Product from '../models/Product.js';
 import Vendor from '../models/Vendor.js';
+import Quotation from '../models/Quotation.js';
+import Lead from '../models/Lead.js';
+import Booking from '../models/Booking.js';
 import { asyncHandler, sendSuccess, sendPaginated, ApiError, getPagination, sanitizeUser } from '../utils/helpers.js';
 import { HTTP_STATUS } from '../utils/constants.js';
 import { getAdminDashboardSummary } from '../services/analyticsService.js';
@@ -197,3 +200,166 @@ export const broadcastNotification = asyncHandler(async (req, res) => {
 
   sendSuccess(res, { recipientCount: users.length }, `Notification sent to ${users.length} users`);
 });
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+export const getUsers = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = {};
+  if (req.query.role) filter.role = req.query.role;
+  if (req.query.isActive !== undefined) filter.isActive = req.query.isActive === 'true';
+  if (req.query.search) {
+    filter.$or = [
+      { name: { $regex: req.query.search, $options: 'i' } },
+      { email: { $regex: req.query.search, $options: 'i' } },
+    ];
+  }
+  const [users, total] = await Promise.all([
+    User.find(filter).select('-password -refreshToken').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    User.countDocuments(filter),
+  ]);
+  sendPaginated(res, users.map(sanitizeUser), { page, limit, total });
+});
+
+export const updateUser = asyncHandler(async (req, res) => {
+  const { role, isActive } = req.body;
+  const user = await User.findById(req.params.id);
+  if (!user) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'User not found');
+  if (role) user.role = role;
+  if (isActive !== undefined) user.isActive = isActive;
+  await user.save();
+  sendSuccess(res, { user: sanitizeUser(user) }, 'User updated');
+});
+
+export const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'User not found');
+  user.isActive = false;
+  await user.save();
+  sendSuccess(res, null, 'User deactivated');
+});
+
+// ============================================
+// VENDOR MANAGEMENT (Extended)
+// ============================================
+
+export const updateVendor = asyncHandler(async (req, res) => {
+  const vendor = await Vendor.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!vendor) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Vendor not found');
+  sendSuccess(res, { vendor }, 'Vendor updated');
+});
+
+export const deleteVendor = asyncHandler(async (req, res) => {
+  const vendor = await Vendor.findByIdAndDelete(req.params.id);
+  if (!vendor) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Vendor not found');
+  sendSuccess(res, null, 'Vendor deleted');
+});
+
+export const verifyVendor = asyncHandler(async (req, res) => {
+  const vendor = await Vendor.findById(req.params.id);
+  if (!vendor) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Vendor not found');
+  vendor.verified = true;
+  vendor.status = 'active';
+  await vendor.save();
+  sendSuccess(res, { vendor }, 'Vendor verified');
+});
+
+// ============================================
+// PRODUCT MANAGEMENT (Extended)
+// ============================================
+
+export const updateProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!product) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Product not found');
+  sendSuccess(res, { product }, 'Product updated');
+});
+
+export const deleteProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findByIdAndDelete(req.params.id);
+  if (!product) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Product not found');
+  sendSuccess(res, null, 'Product deleted');
+});
+
+// ============================================
+// QUOTATION MANAGEMENT
+// ============================================
+
+export const getQuotations = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = {};
+  if (req.query.status) filter.status = req.query.status;
+  const [quotations, total] = await Promise.all([
+    Quotation.find(filter).populate('userId', 'name email').populate('vendorId', 'companyName').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Quotation.countDocuments(filter),
+  ]);
+  sendPaginated(res, quotations, { page, limit, total });
+});
+
+export const createQuotation = asyncHandler(async (req, res) => {
+  const quotation = await Quotation.create(req.body);
+  sendSuccess(res, { quotation }, 'Quotation created', HTTP_STATUS.CREATED);
+});
+
+export const updateQuotation = asyncHandler(async (req, res) => {
+  const quotation = await Quotation.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!quotation) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Quotation not found');
+  sendSuccess(res, { quotation }, 'Quotation updated');
+});
+
+// ============================================
+// LEAD MANAGEMENT
+// ============================================
+
+export const getLeads = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = {};
+  if (req.query.status) filter.status = req.query.status;
+  if (req.query.priority) filter.priority = req.query.priority;
+  if (req.query.source) filter.source = req.query.source;
+  const [leads, total] = await Promise.all([
+    Lead.find(filter).populate('assignedTo', 'companyName').sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Lead.countDocuments(filter),
+  ]);
+  sendPaginated(res, leads, { page, limit, total });
+});
+
+export const createLead = asyncHandler(async (req, res) => {
+  const lead = await Lead.create(req.body);
+  sendSuccess(res, { lead }, 'Lead created', HTTP_STATUS.CREATED);
+});
+
+export const updateLead = asyncHandler(async (req, res) => {
+  const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!lead) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Lead not found');
+  sendSuccess(res, { lead }, 'Lead updated');
+});
+
+// ============================================
+// BOOKING MANAGEMENT
+// ============================================
+
+export const getBookings = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = {};
+  if (req.query.status) filter.status = req.query.status;
+  if (req.query.bookingType) filter.bookingType = req.query.bookingType;
+  const [bookings, total] = await Promise.all([
+    Booking.find(filter).populate('userId', 'name email').populate('vendorId', 'companyName').sort({ scheduledDate: -1 }).skip(skip).limit(limit),
+    Booking.countDocuments(filter),
+  ]);
+  sendPaginated(res, bookings, { page, limit, total });
+});
+
+export const createBooking = asyncHandler(async (req, res) => {
+  const booking = await Booking.create({ ...req.body, userId: req.body.userId || req.user._id });
+  sendSuccess(res, { booking }, 'Booking created', HTTP_STATUS.CREATED);
+});
+
+export const updateBooking = asyncHandler(async (req, res) => {
+  const booking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!booking) throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Booking not found');
+  sendSuccess(res, { booking }, 'Booking updated');
+});
+

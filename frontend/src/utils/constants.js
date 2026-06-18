@@ -7,6 +7,7 @@ export const NAV_LINKS = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about' },
   { name: 'Features', path: '/features' },
+  { name: 'Marketplace', path: '/marketplace' },
   { name: 'Contact', path: '/contact' },
 ];
 
@@ -17,6 +18,7 @@ export const DASHBOARD_LINKS = [
   { name: 'Bill Upload', path: '/dashboard/bill-upload', icon: 'HiOutlineDocumentArrowUp' },
   { name: 'Rooftop Analysis', path: '/dashboard/rooftop', icon: 'HiOutlineBuildingOffice' },
   { name: 'Solar Forecast', path: '/dashboard/forecast', icon: 'HiOutlineSun' },
+  { name: 'IoT Monitor', path: '/dashboard/iot', icon: 'HiOutlineSignal' },
   { name: 'AI Assistant', path: '/dashboard/ai-chat', icon: 'HiOutlineCpuChip' },
   { name: 'Reports', path: '/dashboard/reports', icon: 'HiOutlineDocumentArrowDown' },
   { name: 'Settings', path: '/dashboard/settings', icon: 'HiOutlineCog6Tooth' },
@@ -25,8 +27,11 @@ export const DASHBOARD_LINKS = [
 export const ADMIN_LINKS = [
   { name: 'Admin Dashboard', path: '/admin', icon: 'HiOutlineShieldCheck' },
   { name: 'User Management', path: '/admin/users', icon: 'HiOutlineUsers' },
-  { name: 'System Analytics', path: '/admin/analytics', icon: 'HiOutlineChartBar' },
-  { name: 'Settings', path: '/admin/settings', icon: 'HiOutlineCog6Tooth' },
+  { name: 'Vendor Management', path: '/admin/vendors', icon: 'HiOutlineBuildingStorefront' },
+  { name: 'Products', path: '/admin/products', icon: 'HiOutlineCube' },
+  { name: 'Leads & CRM', path: '/admin/leads', icon: 'HiOutlineFunnel' },
+  { name: 'Quotations', path: '/admin/quotations', icon: 'HiOutlineDocumentText' },
+  { name: 'Bookings', path: '/admin/bookings', icon: 'HiOutlineCalendarDays' },
 ];
 
 export const STATS = [
