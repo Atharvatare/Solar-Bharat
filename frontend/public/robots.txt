@@ -1,0 +1,20 @@
+# Solar Bharat Robots.txt
+# https://solar-bharat.vercel.app
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /features
+Allow: /contact
+Allow: /marketplace
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+# Sitemaps
+Sitemap: https://solar-bharat.vercel.app/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1

@@ -1,0 +1,15 @@
+{
+  "name": "Solar Bharat — AI-Powered Renewable Energy Platform",
+  "short_name": "Solar Bharat",
+  "description": "India's smartest solar energy platform. AI rooftop analysis, solar calculator, energy forecasting.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "categories": ["business", "utilities", "productivity"],
+  "lang": "en-IN",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

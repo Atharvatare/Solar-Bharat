@@ -13,7 +13,7 @@ import connectDB from './config/db.js';
 import logger from './utils/logger.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import errorHandler, { notFound } from './middleware/errorHandler.js';
-import { sanitizeBody, securityHeaders, blockSuspicious, auditLog } from './middleware/security.js';
+import { sanitizeBody, securityHeaders, blockSuspicious, auditLog, payloadGuard, requestFingerprint, maskSensitiveData } from './middleware/security.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -106,8 +106,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // These middleware need req.body to be parsed first
+app.use(payloadGuard);
+app.use(requestFingerprint);
 app.use(sanitizeBody);
 app.use(blockSuspicious);
+app.use(maskSensitiveData);
 
 // Audit log for mutations and errors
 app.use(auditLog);
